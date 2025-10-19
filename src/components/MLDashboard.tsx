@@ -278,7 +278,7 @@ export function MLDashboard() {
                 ? '⚠️ High fatigue detected. Consider a deload week to prevent overtraining.'
                 : latestPrediction.deloadRisk.probability >= 0.4
                 ? '⚡ Moderate fatigue. Monitor your recovery and consider reducing volume.'
-                : '✅ Low fatigue. You're recovering well and can continue progressive overload.'}
+                : '✅ Low fatigue. You are recovering well and can continue progressive overload.'}
             </Text>
           </View>
         </View>
@@ -292,7 +292,7 @@ export function MLDashboard() {
           The models analyze your check-ins, training logs, and recovery patterns to provide personalized insights.
         </Text>
         <Text style={styles.footerNote}>
-          Note: ML predictions complement, but don't replace, listening to your body and professional coaching.
+          Note: ML predictions complement, but do not replace, listening to your body and professional coaching.
         </Text>
       </View>
     </ScrollView>
