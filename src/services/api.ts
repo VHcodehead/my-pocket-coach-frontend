@@ -348,28 +348,17 @@ export const trainingAPI = {
   },
 
   generatePlan: async (onboardingData: any): Promise<APIResponse> => {
-    console.log('[API] Generating training plan');
-    // Training plan generation: Phase 1 (~10s) + Phase 2 (~15-20s per 2-week block × 6) = ~120-150s
-    // Frontend timeout matches Railway's 300s timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000); // 300 second (5 min) timeout
+    console.log('[API] Starting async training plan generation');
+    // Returns immediately with jobId - no timeout needed
+    return apiFetch('/training/plan/generate', {
+      method: 'POST',
+      body: JSON.stringify(onboardingData),
+    });
+  },
 
-    try {
-      const response = await apiFetch('/training/plan/generate', {
-        method: 'POST',
-        body: JSON.stringify(onboardingData),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        console.error('[API] Training plan generation timed out after 300 seconds');
-        throw new Error('Plan generation is taking longer than expected. The AI is working hard to create your perfect program - please wait or try again.');
-      }
-      throw error;
-    }
+  checkPlanStatus: async (jobId: number): Promise<APIResponse> => {
+    console.log('[API] Checking plan generation status:', jobId);
+    return apiFetch(`/training/plan/status/${jobId}`);
   },
 
   // Plan Management
@@ -474,6 +463,11 @@ export const trainingAPI = {
     return apiFetch(`/training/exercises/${id}`);
   },
 
+  getExerciseGif: async (id: number): Promise<APIResponse> => {
+    console.log('[API] Fetching exercise GIF:', id);
+    return apiFetch(`/api/exercise-gifs/${id}`);
+  },
+
   // Adjustments
   reportMissedWorkout: async (templateId: number, reason: string): Promise<APIResponse> => {
     console.log('[API] Reporting missed workout:', templateId);
@@ -508,6 +502,76 @@ export const trainingAPI = {
       method: 'POST',
       body: JSON.stringify({ deloadHistoryId: deloadId, accepted }),
     });
+  },
+};
+
+// ============ PHOTO LOGGING ENDPOINTS ============
+
+export const photoLogAPI = {
+  analyzePhoto: async (base64Image: string, userId: string, description?: string): Promise<APIResponse> => {
+    console.log('[API] Starting photo analysis (base64)', {
+      imageSize: base64Image.length,
+      userId,
+      hasDescription: !!description
+    });
+
+    // Send as JSON instead of FormData (more reliable with React Native)
+    return apiFetch('/api/bulletproof-photos/analyze-base64', {
+      method: 'POST',
+      body: JSON.stringify({
+        image: base64Image,
+        userId,
+        description,
+      }),
+    });
+  },
+
+  submitClarifications: async (sessionId: string, clarifications: any): Promise<APIResponse> => {
+    console.log('[API] Submitting clarifications for session:', sessionId);
+    return apiFetch('/api/bulletproof-photos/clarify', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, clarifications }),
+    });
+  },
+
+  completeSession: async (sessionId: string): Promise<APIResponse> => {
+    console.log('[API] Completing photo analysis session:', sessionId);
+    return apiFetch(`/api/bulletproof-photos/complete/${sessionId}`, {
+      method: 'POST',
+    });
+  },
+
+  getGuidance: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching photo logging guidance');
+    return apiFetch('/api/bulletproof-photos/guidance');
+  },
+};
+
+// ============ ML PREDICTIONS ENDPOINTS ============
+
+export const mlPredictionsAPI = {
+  // Get ML prediction history with trends
+  getHistory: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching ML prediction history');
+    return apiFetch('/api/ml/history');
+  },
+
+  // Get latest ML predictions from last check-in
+  getLatest: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching latest ML predictions');
+    return apiFetch('/api/ml/latest');
+  },
+
+  // Get weight prediction trend data
+  getWeightTrends: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching weight prediction trends');
+    return apiFetch('/api/ml/trends/weight');
+  },
+
+  // Get deload risk over time
+  getDeloadTrends: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching deload risk trends');
+    return apiFetch('/api/ml/trends/deload');
   },
 };
 

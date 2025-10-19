@@ -1,4 +1,4 @@
-// AI Coach chat screen
+// AI Coach chat screen with ML Predictions Dashboard
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, FlatList, ScrollView } from 'react-native';
 import { coachAPI, foodLogAPI, trainingAPI } from '../../src/services/api';
@@ -7,6 +7,7 @@ import { useUser } from '../../src/contexts/UserContext';
 import { DailyFoodLog } from '../../src/types';
 import { getSuggestedQuestions, SuggestedQuestion } from '../../src/utils/coachSuggestedQuestions';
 import { HamburgerMenu } from '../../src/components/HamburgerMenu';
+import { MLDashboard } from '../../src/components/MLDashboard';
 
 interface Message {
   id: string;
@@ -19,6 +20,7 @@ export default function CoachScreen() {
   const { profile } = useUser();
   const firstName = profile?.fullName?.split(' ')[0] || 'there';
 
+  const [activeTab, setActiveTab] = useState<'chat' | 'ml'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -173,18 +175,42 @@ export default function CoachScreen() {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <HamburgerMenu style={styles.menuButton} />
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>24/7 Coach Chat</Text>
-          <Text style={styles.subtitle}>I'm here whenever you need me</Text>
+          <Text style={styles.title}>24/7 Coach</Text>
+          <Text style={styles.subtitle}>AI Chat & ML Predictions</Text>
         </View>
       </View>
+
+      {/* Tab Switcher */}
+      <View style={styles.tabSwitcher}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'chat' && styles.tabActive]}
+          onPress={() => setActiveTab('chat')}
+        >
+          <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>
+            💬 AI Chat
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'ml' && styles.tabActive]}
+          onPress={() => setActiveTab('ml')}
+        >
+          <Text style={[styles.tabText, activeTab === 'ml' && styles.tabTextActive]}>
+            🤖 ML Insights
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Conditional Content */}
+      {activeTab === 'chat' ? (
+        <KeyboardAvoidingView
+          style={styles.chatContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={90}
+        >
 
       <FlatList
         ref={flatListRef}
@@ -233,7 +259,11 @@ export default function CoachScreen() {
           <Text style={styles.sendButtonText}>{loading ? '💭' : '📤'}</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      ) : (
+        <MLDashboard />
+      )}
+    </View>
   );
 }
 
@@ -250,6 +280,36 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     gap: theme.spacing.md,
+  },
+  tabSwitcher: {
+    flexDirection: 'row',
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center',
+  },
+  tabActive: {
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.neon,
+  },
+  tabText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textSecondary,
+  },
+  tabTextActive: {
+    color: theme.colors.background,
+  },
+  chatContainer: {
+    flex: 1,
   },
   menuButton: {
     marginTop: 4,
