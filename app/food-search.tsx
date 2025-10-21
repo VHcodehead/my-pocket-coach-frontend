@@ -12,6 +12,10 @@ import { getMealCompletionSuggestions, MealSuggestion } from '../src/utils/mealP
 import { haptic } from '../src/utils/haptics';
 import { showToast } from '../src/utils/toast';
 
+// Import SVG icons
+import LightBulbIcon from '../assets/icons/light-bulb-icon.svg';
+import LightningBoltIcon from '../assets/icons/lightning-bolt-icon.svg';
+
 interface FoodResult {
   name: string;
   p: number;  // protein
@@ -290,7 +294,10 @@ export default function FoodSearchScreen() {
       {/* Meal Completion Suggestions */}
       {!searchQuery && mealSuggestions.length > 0 && (
         <View style={styles.suggestionsSection}>
-          <Text style={styles.suggestionsTitle}>💡 Suggested for This Meal</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <LightBulbIcon width={18} height={18} fill={theme.colors.primary} />
+            <Text style={styles.suggestionsTitle}>Suggested for This Meal</Text>
+          </View>
           {mealSuggestions.map((suggestion, index) => (
             <TouchableOpacity
               key={index}
@@ -327,7 +334,10 @@ export default function FoodSearchScreen() {
       {/* Recent Foods - Quick Add */}
       {!searchQuery && recentFoods.length > 0 && (
         <View style={styles.recentSection}>
-          <Text style={styles.recentTitle}>⚡ Quick Add Recent</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <LightningBoltIcon width={18} height={18} fill={theme.colors.encouragement} />
+            <Text style={styles.recentTitle}>Quick Add Recent</Text>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recentScroll}>
             {recentFoods.map((food, index) => (
               <TouchableOpacity

@@ -5,6 +5,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme } from '../src/theme';
 import { trainingAPI } from '../src/services/api';
 
+// Import SVG icons
+import LightBulbIcon from '../assets/icons/light-bulb-icon.svg';
+import GoalsIcon from '../assets/icons/goals-milestones-icon.svg';
+import ClipboardIcon from '../assets/icons/clipboard-icon.svg';
+import WeeklyCheckinIcon from '../assets/icons/weekly_checkin_icon.svg';
+
 interface Set {
   setNumber: number;
   logged: boolean;
@@ -448,7 +454,10 @@ export default function WorkoutLoggerScreen() {
           {/* Exercise Rationale - Why this exercise */}
           {currentExercise.exerciseRationale && (
             <View style={styles.rationaleCard}>
-              <Text style={styles.rationaleText}>💡 {currentExercise.exerciseRationale}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <LightBulbIcon width={16} height={16} fill={theme.colors.primary} style={{ marginTop: 2 }} />
+                <Text style={[styles.rationaleText, { flex: 1 }]}>{currentExercise.exerciseRationale}</Text>
+              </View>
             </View>
           )}
 
@@ -472,14 +481,20 @@ export default function WorkoutLoggerScreen() {
           {/* Coaching Cues - AI-generated form reminders */}
           {currentExercise.coachingCues && (
             <View style={styles.coachingCuesCard}>
-              <Text style={styles.coachingCuesLabel}>🎯 Coach's Cues:</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <GoalsIcon width={18} height={18} fill={theme.colors.primary} />
+                <Text style={styles.coachingCuesLabel}>Coach's Cues:</Text>
+              </View>
               <Text style={styles.coachingCuesText}>{currentExercise.coachingCues}</Text>
             </View>
           )}
 
           {currentExercise.notes && (
             <View style={styles.exerciseNotes}>
-              <Text style={styles.notesLabel}>📋 This Week:</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <ClipboardIcon width={18} height={18} fill={theme.colors.textSecondary} />
+                <Text style={styles.notesLabel}>This Week:</Text>
+              </View>
               <Text style={styles.notesText}>{currentExercise.notes}</Text>
             </View>
           )}
@@ -489,7 +504,10 @@ export default function WorkoutLoggerScreen() {
               style={styles.formCuesButton}
               onPress={() => setShowFormCues(true)}
             >
-              <Text style={styles.formCuesButtonText}>📝 View Detailed Form Cues</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <WeeklyCheckinIcon width={18} height={18} fill={theme.colors.primary} />
+                <Text style={styles.formCuesButtonText}>View Detailed Form Cues</Text>
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -497,7 +515,10 @@ export default function WorkoutLoggerScreen() {
         {/* Recommendation */}
         {recommendation && (
           <View style={styles.recommendationCard}>
-            <Text style={styles.recommendationLabel}>💡 Recommended Weight</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <LightBulbIcon width={18} height={18} fill={theme.colors.primary} />
+              <Text style={styles.recommendationLabel}>Recommended Weight</Text>
+            </View>
             <Text style={styles.recommendationValue}>{recommendation.recommendedWeight} lbs</Text>
             <Text style={styles.recommendationReason}>{recommendation.reasoning}</Text>
           </View>

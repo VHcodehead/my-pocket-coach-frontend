@@ -6,6 +6,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { predictionsAPI, checkinAPI } from '../services/api';
 import { theme } from '../theme';
 
+// Import SVG icons
+import ProgressIcon from '../../assets/icons/progress-icon.svg';
+import SleepIcon from '../../assets/icons/sleep-icon.svg';
+import GoalsIcon from '../../assets/icons/goals-milestones-icon.svg';
+import LightBulbIcon from '../../assets/icons/light-bulb-icon.svg';
+
 const PREDICTIONS_CACHE_KEY = '@predictions_cache';
 const CACHE_TIMESTAMP_KEY = '@predictions_cache_timestamp';
 
@@ -209,7 +215,10 @@ export function AIPredictionsDashboard() {
       {weightPred && (
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>📈 Weight Prediction</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <ProgressIcon width={20} height={20} fill={theme.colors.primary} />
+              <Text style={styles.cardTitle}>Weight Prediction</Text>
+            </View>
             <View style={styles.confidenceBadge}>
               <Text style={styles.confidenceText}>{Math.round(weightPred.confidence * 100)}% confident</Text>
             </View>
@@ -261,7 +270,10 @@ export function AIPredictionsDashboard() {
       {deloadPred && (
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>😴 Fatigue Analysis</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <SleepIcon width={20} height={20} fill={theme.colors.primary} />
+              <Text style={styles.cardTitle}>Fatigue Analysis</Text>
+            </View>
             <View style={[styles.riskBadge, { backgroundColor: getRiskColor(deloadPred.riskLevel) }]}>
               <Text style={styles.riskBadgeText}>{deloadPred.riskLevel} RISK</Text>
             </View>
@@ -313,7 +325,10 @@ export function AIPredictionsDashboard() {
       {goalPred && (
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>🎯 Goal Timeline</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <GoalsIcon width={20} height={20} fill={theme.colors.primary} />
+              <Text style={styles.cardTitle}>Goal Timeline</Text>
+            </View>
             <View style={[styles.trajectoryBadge, { backgroundColor: getTrajectoryColor(goalPred.trajectory) }]}>
               <Text style={styles.trajectoryBadgeText}>{goalPred.trajectory.replace('_', ' ').toUpperCase()}</Text>
             </View>
@@ -330,9 +345,12 @@ export function AIPredictionsDashboard() {
             95% Confidence: {goalPred.confidenceInterval[0]}-{goalPred.confidenceInterval[1]} weeks
           </Text>
 
-          <Text style={styles.goalNote}>
-            💡 Set a goal weight in your profile for personalized timeline predictions
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 }}>
+            <LightBulbIcon width={14} height={14} fill={theme.colors.textMuted} style={{ marginTop: 2 }} />
+            <Text style={styles.goalNote}>
+              Set a goal weight in your profile for personalized timeline predictions
+            </Text>
+          </View>
 
           <View style={styles.rateComparison}>
             <View style={styles.rateItem}>

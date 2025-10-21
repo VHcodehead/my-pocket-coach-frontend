@@ -7,6 +7,17 @@ import { trainingAPI } from '../../src/services/api';
 import { theme } from '../../src/theme';
 import { TrainingPlan } from '../../src/types';
 
+// Import SVG icons
+import BicepIcon from '../../assets/icons/bicep-icon.svg';
+import TodaysWorkoutIcon from '../../assets/icons/todays-workout-icon.svg';
+import FireIcon from '../../assets/icons/fire-icon.svg';
+import HistoryIcon from '../../assets/icons/history-icon.svg';
+import ClipboardIcon from '../../assets/icons/clipboard-icon.svg';
+import GenerateNewTrainingPlanIcon from '../../assets/icons/generate-new-training-plan-icon.svg';
+import SleepIcon from '../../assets/icons/sleep-icon.svg';
+import PRIcon from '../../assets/icons/pr-icon.svg';
+import ProgressIcon from '../../assets/icons/progress-icon.svg';
+
 export default function TrainingScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -128,12 +139,15 @@ export default function TrainingScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           <View style={styles.header}>
-            <Text style={styles.greeting}>Ready to Train? 💪</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.greeting}>Ready to Train?</Text>
+              <BicepIcon width={28} height={28} fill={theme.colors.primary} />
+            </View>
             <Text style={styles.subGreeting}>Let's build your personalized program</Text>
           </View>
 
           <View style={styles.onboardingCard}>
-            <Text style={styles.onboardingEmoji}>🏋️</Text>
+            <TodaysWorkoutIcon width={64} height={64} fill={theme.colors.primary} />
             <Text style={styles.onboardingTitle}>Start Your Training Journey</Text>
             <Text style={styles.onboardingText}>
               I'll create a personalized training program based on your experience, goals, and available equipment.
@@ -166,8 +180,6 @@ export default function TrainingScreen() {
 
   // Has active plan - show dashboard
   const weekProgress = Math.round((trainingPlan.current_week / trainingPlan.duration_weeks) * 100);
-  const blockEmoji = trainingPlan.current_block === 'deload' ? '🛑' :
-                     trainingPlan.current_block === 'strength' ? '🔥' : '💪';
 
   return (
     <View style={styles.container}>
@@ -177,16 +189,28 @@ export default function TrainingScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Training 💪</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.greeting}>Training</Text>
+            <BicepIcon width={28} height={28} fill={theme.colors.primary} />
+          </View>
           <Text style={styles.subGreeting}>{trainingPlan.name}</Text>
         </View>
 
         {/* Program Status Card */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
-            <View>
-              <Text style={styles.statusWeek}>Week {trainingPlan.current_week} / {trainingPlan.duration_weeks}</Text>
-              <Text style={styles.statusBlock}>{blockEmoji} {trainingPlan.current_block} phase</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View>
+                <Text style={styles.statusWeek}>Week {trainingPlan.current_week} / {trainingPlan.duration_weeks}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {trainingPlan.current_block === 'strength' ? (
+                    <FireIcon width={16} height={16} fill={theme.colors.text} />
+                  ) : (
+                    <BicepIcon width={16} height={16} fill={theme.colors.text} />
+                  )}
+                  <Text style={styles.statusBlock}>{trainingPlan.current_block} phase</Text>
+                </View>
+              </View>
             </View>
             <Text style={styles.statusProgress}>{weekProgress}%</Text>
           </View>
@@ -203,7 +227,7 @@ export default function TrainingScreen() {
             activeOpacity={0.9}
           >
             <View style={styles.workoutHeader}>
-              <Text style={styles.workoutEmoji}>🏋️</Text>
+              <TodaysWorkoutIcon width={48} height={48} fill={theme.colors.primary} />
               <View style={styles.workoutInfo}>
                 <Text style={styles.workoutLabel}>Today's Workout</Text>
                 <Text style={styles.workoutName}>{todayWorkout.workout_name}</Text>
@@ -216,7 +240,7 @@ export default function TrainingScreen() {
           </TouchableOpacity>
         ) : (
           <View style={styles.restDayCard}>
-            <Text style={styles.restEmoji}>😌</Text>
+            <SleepIcon width={48} height={48} fill={theme.colors.textMuted} />
             <Text style={styles.restTitle}>Rest Day</Text>
             <Text style={styles.restMessage}>Recovery is just as important as training!</Text>
           </View>
@@ -227,17 +251,17 @@ export default function TrainingScreen() {
           <Text style={styles.sectionTitle}>This Week</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statEmoji}>🔥</Text>
+              <FireIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.statValue}>0</Text>
               <Text style={styles.statLabel}>Workouts</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statEmoji}>🏆</Text>
+              <PRIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.statValue}>{recentPRs.length}</Text>
               <Text style={styles.statLabel}>PRs</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statEmoji}>💪</Text>
+              <BicepIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.statValue}>0</Text>
               <Text style={styles.statLabel}>Volume (lbs)</Text>
             </View>
@@ -247,7 +271,10 @@ export default function TrainingScreen() {
         {/* Recent PRs */}
         {recentPRs.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent PRs 🏆</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.sectionTitle}>Recent PRs</Text>
+              <PRIcon width={20} height={20} fill={theme.colors.primary} />
+            </View>
             {recentPRs.map((pr, index) => (
               <View key={index} style={styles.prCard}>
                 <View style={styles.prInfo}>
@@ -267,28 +294,28 @@ export default function TrainingScreen() {
               style={styles.actionButton}
               onPress={() => router.push('/training-progress')}
             >
-              <Text style={styles.actionEmoji}>📈</Text>
+              <ProgressIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.actionLabel}>Progress</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => router.push('/training-history')}
             >
-              <Text style={styles.actionEmoji}>📅</Text>
+              <HistoryIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.actionLabel}>History</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => router.push('/training-program')}
             >
-              <Text style={styles.actionEmoji}>📋</Text>
+              <ClipboardIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.actionLabel}>Full Program</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => router.push('/training-exercises')}
             >
-              <Text style={styles.actionEmoji}>💪</Text>
+              <BicepIcon width={32} height={32} fill={theme.colors.primary} />
               <Text style={styles.actionLabel}>Exercises</Text>
             </TouchableOpacity>
           </View>
@@ -300,7 +327,10 @@ export default function TrainingScreen() {
             style={styles.resetButton}
             onPress={handleGenerateNewPlan}
           >
-            <Text style={styles.resetButtonText}>🔄 Generate New Training Plan</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+              <GenerateNewTrainingPlanIcon width={20} height={20} fill={theme.colors.text} />
+              <Text style={styles.resetButtonText}>Generate New Training Plan</Text>
+            </View>
           </TouchableOpacity>
           <Text style={styles.resetButtonHint}>
             Start fresh with a new program tailored to your current goals

@@ -8,6 +8,9 @@ import { haptic } from '../src/utils/haptics';
 import { showToast } from '../src/utils/toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Import SVG icons
+import WaterDropletIcon from '../assets/icons/water-droplet-icon.svg';
+
 const WATER_GOAL = 8; // 8 glasses per day (64 oz)
 const GLASS_SIZE = 8; // 8 oz per glass
 
@@ -102,7 +105,10 @@ export default function WaterTrackerScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Water Intake 💧</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={styles.title}>Water Intake</Text>
+          <WaterDropletIcon width={28} height={28} fill={theme.colors.primary} />
+        </View>
         <Text style={styles.subtitle}>Stay hydrated, stay healthy!</Text>
       </View>
 

@@ -6,6 +6,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme } from '../src/theme';
 import { photoLogAPI, authAPI, foodLogAPI } from '../src/services/api';
 
+// Import SVG icons
+import CameraIcon from '../assets/icons/camera-icon.svg';
+import PhotoIcon from '../assets/icons/photo-icon.svg';
+
 export default function AIPhotoLogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -282,7 +286,7 @@ export default function AIPhotoLogScreen() {
 
       {!photoUri && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>📸</Text>
+          <CameraIcon width={64} height={64} fill={theme.colors.primary} />
           <Text style={styles.emptyText}>Take or Choose a Photo</Text>
           <Text style={styles.emptySubtext}>
             I'll analyze your meal and estimate the nutrition automatically
@@ -290,11 +294,17 @@ export default function AIPhotoLogScreen() {
 
           <View style={styles.buttonGroup}>
             <TouchableOpacity style={styles.primaryButton} onPress={handleTakePhoto}>
-              <Text style={styles.primaryButtonText}>📷 Take Photo</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <CameraIcon width={20} height={20} fill={theme.colors.background} />
+                <Text style={styles.primaryButtonText}>Take Photo</Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryButton} onPress={handlePickPhoto}>
-              <Text style={styles.secondaryButtonText}>🖼️ Choose from Library</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <PhotoIcon width={20} height={20} fill={theme.colors.primary} />
+                <Text style={styles.secondaryButtonText}>Choose from Library</Text>
+              </View>
             </TouchableOpacity>
           </View>
 

@@ -13,6 +13,17 @@ import { MacroDonutChart } from '../../src/components/MacroDonutChart';
 import { FoodEntrySkeleton } from '../../src/components/SkeletonLoader';
 import { copyMealToMultipleDays, getNextNDays, formatDateISO, getFriendlyDateLabel, CopyMealOptions } from '../../src/utils/mealCopy';
 
+// Import SVG icons
+import CameraIcon from '../../assets/icons/camera-icon.svg';
+import MagnifyingGlassIcon from '../../assets/icons/magnifying-glass-icon.svg';
+import ScanIcon from '../../assets/icons/scan-icon.svg';
+import ClipboardIcon from '../../assets/icons/clipboard-icon.svg';
+import NutritionIcon from '../../assets/icons/nutrition-icon.svg';
+import GoalsIcon from '../../assets/icons/goals-milestones-icon.svg';
+import BicepIcon from '../../assets/icons/bicep-icon.svg';
+import LightBulbIcon from '../../assets/icons/light-bulb-icon.svg';
+import QuickAddIcon from '../../assets/icons/quick-add-icon.svg';
+
 export default function NutritionScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -374,7 +385,10 @@ export default function NutritionScreen() {
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Nutrition</Text>
-          <Text style={styles.subtitle}>Track your meals and hit your targets 🍽️</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.subtitle}>Track your meals and hit your targets</Text>
+            <NutritionIcon width={16} height={16} fill={theme.colors.textSecondary} />
+          </View>
         </View>
       </View>
 
@@ -412,21 +426,21 @@ export default function NutritionScreen() {
             style={styles.quickActionButton}
             onPress={() => router.push(`/ai-photo-log?date=${selectedDate.toISOString().split('T')[0]}`)}
           >
-            <Text style={styles.quickActionEmoji}>📸</Text>
+            <CameraIcon width={32} height={32} fill={theme.colors.primary} />
             <Text style={styles.quickActionLabel}>Photo</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickActionButton}
             onPress={() => router.push(`/food-search?date=${selectedDate.toISOString().split('T')[0]}`)}
           >
-            <Text style={styles.quickActionEmoji}>🔍</Text>
+            <MagnifyingGlassIcon width={32} height={32} fill={theme.colors.primary} />
             <Text style={styles.quickActionLabel}>Search</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickActionButton}
             onPress={() => router.push(`/barcode-scanner?date=${selectedDate.toISOString().split('T')[0]}`)}
           >
-            <Text style={styles.quickActionEmoji}>📷</Text>
+            <ScanIcon width={32} height={32} fill={theme.colors.primary} />
             <Text style={styles.quickActionLabel}>Scan</Text>
           </TouchableOpacity>
         </View>
@@ -437,7 +451,7 @@ export default function NutritionScreen() {
         style={styles.mealPlanBanner}
         onPress={() => router.push('/meal-plan')}
       >
-        <Text style={styles.mealPlanBannerEmoji}>📋</Text>
+        <ClipboardIcon width={48} height={48} fill={theme.colors.primary} />
         <View style={styles.mealPlanBannerContent}>
           <Text style={styles.mealPlanBannerTitle}>Your Meal Plan</Text>
           <Text style={styles.mealPlanBannerSubtitle}>Personalized weekly nutrition plan</Text>
@@ -450,7 +464,7 @@ export default function NutritionScreen() {
         style={styles.recipesBanner}
         onPress={() => router.push('/recipe-library')}
       >
-        <Text style={styles.recipesBannerEmoji}>🍽️</Text>
+        <NutritionIcon width={40} height={40} fill={theme.colors.encouragement} />
         <View style={styles.recipesBannerContent}>
           <Text style={styles.recipesBannerTitle}>Browse Recipes</Text>
           <Text style={styles.recipesBannerSubtitle}>Find meals that fit your macros</Text>
@@ -502,9 +516,12 @@ export default function NutritionScreen() {
         {/* Coach Explanation */}
         {todayLog?.adjustmentMessage && (
           <View style={styles.coachExplanation}>
-            <Text style={styles.coachExplanationText}>
-              💡 {todayLog.adjustmentMessage}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+              <LightBulbIcon width={16} height={16} fill={theme.colors.primary} style={{ marginTop: 2 }} />
+              <Text style={[styles.coachExplanationText, { flex: 1 }]}>
+                {todayLog.adjustmentMessage}
+              </Text>
+            </View>
           </View>
         )}
       </View>
@@ -530,26 +547,38 @@ export default function NutritionScreen() {
               style={styles.searchButton}
               onPress={() => router.push(`/food-search?mealType=breakfast&date=${selectedDate.toISOString().split('T')[0]}`)}
             >
-              <Text style={styles.searchButtonText}>🔍 Find Food</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <MagnifyingGlassIcon width={20} height={20} fill={theme.colors.background} />
+                <Text style={styles.searchButtonText}>Find Food</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.barcodeButton}
               onPress={() => router.push(`/barcode-scanner?date=${selectedDate.toISOString().split('T')[0]}`)}
             >
-              <Text style={styles.barcodeButtonText}>📱 Scan</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ScanIcon width={20} height={20} fill={theme.colors.background} />
+                <Text style={styles.barcodeButtonText}>Scan</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.photoLogButton}
               onPress={() => router.push(`/ai-photo-log?date=${selectedDate.toISOString().split('T')[0]}`)}
             >
-              <Text style={styles.photoLogButtonText}>📸 AI</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <CameraIcon width={20} height={20} fill={theme.colors.background} />
+                <Text style={styles.photoLogButtonText}>AI</Text>
+              </View>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
             style={styles.manualButton}
             onPress={() => setShowAddForm(true)}
           >
-            <Text style={styles.manualButtonText}>✍️ Quick Add</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+              <QuickAddIcon width={18} height={18} fill={theme.colors.textSecondary} />
+              <Text style={styles.manualButtonText}>Quick Add</Text>
+            </View>
           </TouchableOpacity>
 
           {/* Copy Yesterday Button */}
@@ -559,9 +588,12 @@ export default function NutritionScreen() {
               onPress={handleCopyYesterday}
               disabled={copying}
             >
-              <Text style={styles.copyYesterdayButtonText}>
-                {copying ? '📋 Copying...' : `📋 Copy Yesterday (${yesterdayLog.entries.length} meals)`}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <ClipboardIcon width={18} height={18} fill={theme.colors.secondary} />
+                <Text style={styles.copyYesterdayButtonText}>
+                  {copying ? 'Copying...' : `Copy Yesterday (${yesterdayLog.entries.length} meals)`}
+                </Text>
+              </View>
               <Text style={styles.copyYesterdayHint}>
                 {Math.round(yesterdayLog.totals.calories)} cal • {Math.round(yesterdayLog.totals.protein)}g P
               </Text>
@@ -718,7 +750,10 @@ export default function NutritionScreen() {
               <Text style={styles.cancelButtonText}>Go Back</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.formButton} onPress={handleAddFood}>
-              <Text style={styles.formButtonText}>Log It! 🎯</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <GoalsIcon width={20} height={20} fill={theme.colors.background} />
+                <Text style={styles.formButtonText}>Log It!</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -730,9 +765,12 @@ export default function NutritionScreen() {
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🌟</Text>
             <Text style={styles.emptyText}>Ready to log your first meal?</Text>
-            <Text style={styles.emptySubtext}>
-              Every journey starts with one meal logged. I'm here to guide you every step of the way! 💪
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+              <Text style={styles.emptySubtext}>
+                Every journey starts with one meal logged. I'm here to guide you every step of the way!
+              </Text>
+              <BicepIcon width={18} height={18} fill={theme.colors.primary} />
+            </View>
             <Text style={styles.emptyHint}>
               👆 Use the buttons above to get started - scan, search, or quick add!
             </Text>
@@ -744,7 +782,10 @@ export default function NutritionScreen() {
                 <Text style={styles.entryMealType}>{entry.meal_type}</Text>
                 <View style={styles.entryActions}>
                   <TouchableOpacity onPress={() => handleCopyToOtherDays(entry)}>
-                    <Text style={styles.copyText}>Copy 📋</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={styles.copyText}>Copy</Text>
+                      <ClipboardIcon width={12} height={12} fill={theme.colors.primary} />
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDeleteEntry(entry.id)}>
                     <Text style={styles.deleteText}>Delete</Text>

@@ -5,6 +5,12 @@ import { Stack, useRouter } from 'expo-router';
 import { theme } from '../src/theme';
 import config from '../src/config';
 
+// Import SVG icons
+import MagnifyingGlassIcon from '../assets/icons/magnifying-glass-icon.svg';
+import BicepIcon from '../assets/icons/bicep-icon.svg';
+import LightningBoltIcon from '../assets/icons/lightning-bolt-icon.svg';
+import NutritionIcon from '../assets/icons/nutrition-icon.svg';
+
 interface Recipe {
   id: number;
   slug: string;
@@ -124,7 +130,9 @@ export default function RecipeLibraryScreen() {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <Text style={styles.searchIcon}>🔍</Text>
+          <View style={styles.searchIconWrapper}>
+            <MagnifyingGlassIcon width={20} height={20} fill={theme.colors.textMuted} />
+          </View>
         </View>
 
         {/* Filters */}
@@ -146,25 +154,34 @@ export default function RecipeLibraryScreen() {
             style={[styles.filterButton, selectedFilter === 'high-protein' && styles.filterButtonActive]}
             onPress={() => setSelectedFilter('high-protein')}
           >
-            <Text style={[styles.filterText, selectedFilter === 'high-protein' && styles.filterTextActive]}>
-              💪 High Protein
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <BicepIcon width={16} height={16} fill={selectedFilter === 'high-protein' ? theme.colors.background : theme.colors.text} />
+              <Text style={[styles.filterText, selectedFilter === 'high-protein' && styles.filterTextActive]}>
+                High Protein
+              </Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterButton, selectedFilter === 'low-carb' && styles.filterButtonActive]}
             onPress={() => setSelectedFilter('low-carb')}
           >
-            <Text style={[styles.filterText, selectedFilter === 'low-carb' && styles.filterTextActive]}>
-              🥗 Low Carb
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <NutritionIcon width={16} height={16} fill={selectedFilter === 'low-carb' ? theme.colors.background : theme.colors.text} />
+              <Text style={[styles.filterText, selectedFilter === 'low-carb' && styles.filterTextActive]}>
+                Low Carb
+              </Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterButton, selectedFilter === 'quick' && styles.filterButtonActive]}
             onPress={() => setSelectedFilter('quick')}
           >
-            <Text style={[styles.filterText, selectedFilter === 'quick' && styles.filterTextActive]}>
-              ⚡ Quick (≤30min)
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <LightningBoltIcon width={16} height={16} fill={selectedFilter === 'quick' ? theme.colors.background : theme.colors.text} />
+              <Text style={[styles.filterText, selectedFilter === 'quick' && styles.filterTextActive]}>
+                Quick (≤30min)
+              </Text>
+            </View>
           </TouchableOpacity>
         </ScrollView>
 
@@ -189,7 +206,7 @@ export default function RecipeLibraryScreen() {
                 )}
                 {!recipe.image && (
                   <View style={styles.recipeImagePlaceholder}>
-                    <Text style={styles.recipeImagePlaceholderEmoji}>🍽️</Text>
+                    <NutritionIcon width={48} height={48} fill={theme.colors.textMuted} />
                   </View>
                 )}
                 <View style={styles.recipeInfo}>
@@ -220,7 +237,7 @@ export default function RecipeLibraryScreen() {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🔍</Text>
+            <MagnifyingGlassIcon width={64} height={64} fill={theme.colors.textMuted} />
             <Text style={styles.emptyTitle}>No recipes found</Text>
             <Text style={styles.emptyText}>Try a different search or filter</Text>
           </View>
@@ -279,12 +296,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
-  searchIcon: {
+  searchIconWrapper: {
     position: 'absolute',
     right: theme.spacing.md,
     top: '50%',
-    transform: [{ translateY: -12 }],
-    fontSize: 24,
+    transform: [{ translateY: -10 }],
   },
   filtersScroll: {
     maxHeight: 50,

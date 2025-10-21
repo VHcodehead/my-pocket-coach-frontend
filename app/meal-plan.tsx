@@ -6,6 +6,13 @@ import * as SecureStore from 'expo-secure-store';
 import { theme } from '../src/theme';
 import { mealPlanAPI, authAPI } from '../src/services/api';
 
+// Import SVG icons
+import ClipboardIcon from '../assets/icons/clipboard-icon.svg';
+import AlarmClockIcon from '../assets/icons/alarm-clock.svg';
+import LightBulbIcon from '../assets/icons/light-bulb-icon.svg';
+import PrepTipIcon from '../assets/icons/prep-tip-icon.svg';
+import DiceIcon from '../assets/icons/dice-icon.svg';
+
 interface DailyMeal {
   title: string;
   items: {
@@ -63,17 +70,33 @@ export default function MealPlanScreen() {
 
         // Backend returns flat array of daily meals (breakfast, lunch, dinner, snacks)
         if (mealPlanResponse.data.plan && Array.isArray(mealPlanResponse.data.plan)) {
-          // Sort meals by timing: breakfast, snacks (10-11am), lunch, dinner
+          // Sort meals by actual timing
           const sortedMeals = [...mealPlanResponse.data.plan].sort((a, b) => {
-            const getMealOrder = (meal: DailyMeal) => {
+            const getTimeValue = (meal: DailyMeal) => {
+              const timingStr = meal.timing || meal.title || '';
+
+              // Extract hour from timing (e.g., "7-8 am" → 7, "4-5 pm" → 16)
+              const amMatch = timingStr.match(/(\d+)(?:-\d+)?\s*am/i);
+              const pmMatch = timingStr.match(/(\d+)(?:-\d+)?\s*pm/i);
+
+              if (amMatch) {
+                const hour = parseInt(amMatch[1]);
+                return hour === 12 ? 0 : hour; // 12 am = midnight = 0
+              }
+              if (pmMatch) {
+                const hour = parseInt(pmMatch[1]);
+                return hour === 12 ? 12 : hour + 12; // Convert to 24hr
+              }
+
+              // Fallback to keyword-based ordering if no time found
               const title = meal.title.toLowerCase();
-              if (title.includes('breakfast')) return 1;
-              if (title.includes('snack') || title.includes('10-11')) return 2;
-              if (title.includes('lunch')) return 3;
-              if (title.includes('dinner')) return 4;
-              return 5;
+              if (title.includes('breakfast')) return 7;
+              if (title.includes('lunch')) return 12;
+              if (title.includes('dinner')) return 18;
+              if (title.includes('snack')) return 10; // Default snack time
+              return 99;
             };
-            return getMealOrder(a) - getMealOrder(b);
+            return getTimeValue(a) - getTimeValue(b);
           });
 
           setDailyMeals(sortedMeals);
@@ -168,7 +191,7 @@ export default function MealPlanScreen() {
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'Meal Plan', headerShown: true }} />
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>📋</Text>
+          <ClipboardIcon width={64} height={64} fill={theme.colors.textMuted} />
           <Text style={styles.emptyTitle}>No Meal Plan Yet</Text>
           <Text style={styles.emptyText}>
             Complete your weekly check-in to generate your personalized meal plan
@@ -299,7 +322,10 @@ export default function MealPlanScreen() {
 
                 {/* Timing */}
                 {meal.timing && (
-                  <Text style={styles.mealTiming}>⏰ {meal.timing}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <AlarmClockIcon width={14} height={14} fill={theme.colors.textMuted} />
+                    <Text style={styles.mealTiming}>{meal.timing}</Text>
+                  </View>
                 )}
 
                 {/* Food Items */}
@@ -315,7 +341,10 @@ export default function MealPlanScreen() {
                 {/* Coach Notes */}
                 {meal.coachNotes && (
                   <View style={styles.coachNotesBox}>
-                    <Text style={styles.coachNotesLabel}>💡 Coach Note:</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <LightBulbIcon width={14} height={14} fill={theme.colors.primary} />
+                      <Text style={styles.coachNotesLabel}>Coach Note:</Text>
+                    </View>
                     <Text style={styles.coachNotesText}>{meal.coachNotes}</Text>
                   </View>
                 )}
@@ -323,7 +352,10 @@ export default function MealPlanScreen() {
                 {/* Prep Tips */}
                 {meal.prepTips && meal.prepTips.length > 0 && (
                   <View style={styles.prepTipsBox}>
-                    <Text style={styles.prepTipsLabel}>🍳 Prep Tips:</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <PrepTipIcon width={14} height={14} fill={theme.colors.encouragement} />
+                      <Text style={styles.prepTipsLabel}>Prep Tips:</Text>
+                    </View>
                     {meal.prepTips.map((tip, tipIdx) => (
                       <Text key={tipIdx} style={styles.prepTip}>
                         • {tip}
@@ -339,7 +371,7 @@ export default function MealPlanScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your Meal Plan</Text>
             <View style={styles.infoCard}>
-              <Text style={styles.infoEmoji}>📋</Text>
+              <ClipboardIcon width={48} height={48} fill={theme.colors.primary} />
               <Text style={styles.infoText}>
                 Your personalized meal plan will be generated after your first weekly check-in!
               </Text>
@@ -349,7 +381,10 @@ export default function MealPlanScreen() {
 
         {/* Tips */}
         <View style={styles.tipsCard}>
-          <Text style={styles.tipsTitle}>💡 Pro Tips</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <LightBulbIcon width={20} height={20} fill={theme.colors.primary} />
+            <Text style={styles.tipsTitle}>Pro Tips</Text>
+          </View>
           <Text style={styles.tipText}>• Your macros auto-adjust every weekly check-in based on progress</Text>
           <Text style={styles.tipText}>• Prep meals in bulk to save time during the week</Text>
           <Text style={styles.tipText}>• You can swap similar foods (chicken ↔ turkey, rice ↔ pasta)</Text>
@@ -362,9 +397,12 @@ export default function MealPlanScreen() {
           onPress={generateNewVariation}
           disabled={generating}
         >
-          <Text style={styles.generateButtonText}>
-            {generating ? '🔄 Generating New Variation...' : '🎲 Generate New Variation'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <DiceIcon width={20} height={20} fill={theme.colors.background} />
+            <Text style={styles.generateButtonText}>
+              {generating ? 'Generating New Variation...' : 'Generate New Variation'}
+            </Text>
+          </View>
           <Text style={styles.generateButtonSubtext}>
             Get a fresh meal plan with the same macros
           </Text>

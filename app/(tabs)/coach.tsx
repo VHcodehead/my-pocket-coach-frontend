@@ -9,6 +9,10 @@ import { DailyFoodLog } from '../../src/types';
 import { getSuggestedQuestions, SuggestedQuestion } from '../../src/utils/coachSuggestedQuestions';
 import { AIPredictionsDashboard } from '../../src/components/AIPredictionsDashboard';
 
+// Import SVG icons
+import PredictionIcon from '../../assets/icons/prediction-icon.svg';
+import CoachIcon from '../../assets/icons/coach-icon.svg';
+
 interface Message {
   id: string;
   text: string;
@@ -173,7 +177,7 @@ export default function CoachScreen() {
     <View style={[styles.messageContainer, item.isUser && styles.messageContainerUser]}>
       {!item.isUser && (
         <View style={styles.coachAvatar}>
-          <Text style={styles.coachAvatarEmoji}>💬</Text>
+          <CoachIcon width={20} height={20} fill={theme.colors.background} />
         </View>
       )}
       <View style={[styles.messageBubble, item.isUser && styles.messageBubbleUser]}>
@@ -198,17 +202,31 @@ export default function CoachScreen() {
           style={[styles.viewButton, activeView === 'predictions' && styles.viewButtonActive]}
           onPress={() => setActiveView('predictions')}
         >
-          <Text style={[styles.viewButtonText, activeView === 'predictions' && styles.viewButtonTextActive]}>
-            📊 Predictions
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <PredictionIcon
+              width={18}
+              height={18}
+              fill={activeView === 'predictions' ? theme.colors.background : theme.colors.textSecondary}
+            />
+            <Text style={[styles.viewButtonText, activeView === 'predictions' && styles.viewButtonTextActive]}>
+              Predictions
+            </Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.viewButton, activeView === 'chat' && styles.viewButtonActive]}
           onPress={() => setActiveView('chat')}
         >
-          <Text style={[styles.viewButtonText, activeView === 'chat' && styles.viewButtonTextActive]}>
-            💬 Chat
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <CoachIcon
+              width={18}
+              height={18}
+              fill={activeView === 'chat' ? theme.colors.background : theme.colors.textSecondary}
+            />
+            <Text style={[styles.viewButtonText, activeView === 'chat' && styles.viewButtonTextActive]}>
+              Chat
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -221,7 +239,7 @@ export default function CoachScreen() {
         >
           {/* Description Card */}
           <View style={styles.descriptionCard}>
-            <Text style={styles.descriptionEmoji}>🔮</Text>
+            <PredictionIcon width={48} height={48} fill={theme.colors.primary} />
             <Text style={styles.descriptionTitle}>See Your Future Progress</Text>
             <Text style={styles.descriptionText}>
               Based on your current habits, I can predict where you'll be in 30, 60, and 90 days.
@@ -236,7 +254,7 @@ export default function CoachScreen() {
             style={styles.chatCTA}
             onPress={() => setActiveView('chat')}
           >
-            <Text style={styles.chatCTAEmoji}>💬</Text>
+            <CoachIcon width={40} height={40} fill={theme.colors.encouragement} />
             <View style={styles.chatCTAContent}>
               <Text style={styles.chatCTATitle}>Have Questions?</Text>
               <Text style={styles.chatCTAText}>Chat with me for personalized advice</Text>

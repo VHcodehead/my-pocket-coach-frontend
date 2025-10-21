@@ -7,6 +7,16 @@ import { authAPI } from '../../src/services/api';
 import { theme } from '../../src/theme';
 import { getUserFriendlyError } from '../../src/utils/errorMessages';
 
+// Import SVG icons
+import CameraIcon from '../../assets/icons/camera-icon.svg';
+import GoalsIcon from '../../assets/icons/goals-milestones-icon.svg';
+import SettingIcon from '../../assets/icons/setting-icon.svg';
+import ProgressIcon from '../../assets/icons/progress-icon.svg';
+import WaterDropletIcon from '../../assets/icons/water-droplet-icon.svg';
+import WeeklyCheckinIcon from '../../assets/icons/weekly_checkin_icon.svg';
+import ThemeIcon from '../../assets/icons/theme-icon.svg';
+import NotificationIcon from '../../assets/icons/notification-icon.svg';
+
 console.log('[ME] Component file loaded');
 
 export default function MeScreen() {
@@ -168,7 +178,7 @@ export default function MeScreen() {
           onPress={() => router.push('/photo-timeline')}
         >
           <View style={styles.progressIcon}>
-            <Text style={styles.progressEmoji}>📸</Text>
+            <CameraIcon width={32} height={32} fill={theme.colors.primary} />
           </View>
           <View style={styles.progressContent}>
             <Text style={styles.progressTitle}>Progress Photos</Text>
@@ -182,7 +192,7 @@ export default function MeScreen() {
           onPress={() => router.push('/weekly-summary')}
         >
           <View style={styles.progressIcon}>
-            <Text style={styles.progressEmoji}>📊</Text>
+            <ProgressIcon width={32} height={32} fill={theme.colors.primary} />
           </View>
           <View style={styles.progressContent}>
             <Text style={styles.progressTitle}>Weekly Summaries</Text>
@@ -193,10 +203,10 @@ export default function MeScreen() {
 
         <TouchableOpacity
           style={styles.progressCard}
-          onPress={() => Alert.alert('Coming Soon! 🎯', 'Goals & milestones tracking is on the way!')}
+          onPress={() => Alert.alert('Coming Soon!', 'Goals & milestones tracking is on the way!')}
         >
           <View style={styles.progressIcon}>
-            <Text style={styles.progressEmoji}>🎯</Text>
+            <GoalsIcon width={32} height={32} fill={theme.colors.primary} />
           </View>
           <View style={styles.progressContent}>
             <Text style={styles.progressTitle}>Goals & Milestones</Text>
@@ -210,7 +220,7 @@ export default function MeScreen() {
           onPress={() => Alert.alert('Coming Soon! 💧', 'Wellness tracking for water, mood, and sleep is coming!')}
         >
           <View style={styles.progressIcon}>
-            <Text style={styles.progressEmoji}>💧</Text>
+            <WaterDropletIcon width={32} height={32} fill={theme.colors.primary} />
           </View>
           <View style={styles.progressContent}>
             <Text style={styles.progressTitle}>Wellness Tracking</Text>
@@ -229,7 +239,7 @@ export default function MeScreen() {
           onPress={() => router.push('/weekly-checkin')}
         >
           <View style={styles.menuIconContainer}>
-            <Text style={styles.menuIcon}>📝</Text>
+            <WeeklyCheckinIcon width={24} height={24} fill={theme.colors.textMuted} />
           </View>
           <Text style={styles.menuLabel}>Weekly Check-in</Text>
           <Text style={styles.menuArrow}>›</Text>
@@ -240,7 +250,7 @@ export default function MeScreen() {
           onPress={() => router.push('/settings')}
         >
           <View style={styles.menuIconContainer}>
-            <Text style={styles.menuIcon}>⚙️</Text>
+            <SettingIcon width={24} height={24} fill={theme.colors.textMuted} />
           </View>
           <Text style={styles.menuLabel}>Settings</Text>
           <Text style={styles.menuArrow}>›</Text>
@@ -251,7 +261,7 @@ export default function MeScreen() {
           onPress={() => Alert.alert('Coming Soon! 🎨', 'Theme customization is on the way!')}
         >
           <View style={styles.menuIconContainer}>
-            <Text style={styles.menuIcon}>🎨</Text>
+            <ThemeIcon width={24} height={24} fill={theme.colors.textMuted} />
           </View>
           <Text style={styles.menuLabel}>Theme Settings</Text>
           <Text style={styles.menuArrow}>›</Text>
@@ -262,7 +272,7 @@ export default function MeScreen() {
           onPress={() => Alert.alert('Coming Soon! 🔔', 'Notification settings coming soon!')}
         >
           <View style={styles.menuIconContainer}>
-            <Text style={styles.menuIcon}>🔔</Text>
+            <NotificationIcon width={24} height={24} fill={theme.colors.textMuted} />
           </View>
           <Text style={styles.menuLabel}>Notifications</Text>
           <Text style={styles.menuArrow}>›</Text>

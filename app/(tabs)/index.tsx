@@ -12,6 +12,21 @@ import { getGreeting } from '../../src/utils/coachFeedback';
 import { generate7DayCalendar, calculateCurrentStreak, CalendarDay } from '../../src/utils/streakCalendar';
 import { getContextualActions, QuickAction } from '../../src/utils/contextualActions';
 
+// Import SVG icons
+import FireIcon from '../../assets/icons/fire-icon.svg';
+import HistoryIcon from '../../assets/icons/history-icon.svg';
+import TodaysWorkoutIcon from '../../assets/icons/todays-workout-icon.svg';
+import ClipboardIcon from '../../assets/icons/clipboard-icon.svg';
+import CameraIcon from '../../assets/icons/camera-icon.svg';
+import FutureProgressIcon from '../../assets/icons/future-progress-icon.svg';
+import MoodIcon from '../../assets/icons/mood-icon.svg';
+import NutritionIcon from '../../assets/icons/nutrition-icon.svg';
+import WaterDropletIcon from '../../assets/icons/water-droplet-icon.svg';
+import ScanIcon from '../../assets/icons/scan-icon.svg';
+import CoachIcon from '../../assets/icons/coach-icon.svg';
+import LightBulbIcon from '../../assets/icons/light-bulb-icon.svg';
+import BicepIcon from '../../assets/icons/bicep-icon.svg';
+
 export default function HomeScreen() {
   const router = useRouter();
   const { profile: globalProfile } = useUser();
@@ -25,6 +40,34 @@ export default function HomeScreen() {
   const [contextualActions, setContextualActions] = useState<QuickAction[]>([]);
   const [trainingPlan, setTrainingPlan] = useState<any>(null);
   const [todayWorkout, setTodayWorkout] = useState<any>(null);
+
+  // Map action IDs to SVG icons
+  const getActionIcon = (actionId: string) => {
+    const iconProps = { width: 32, height: 32, fill: theme.colors.primary };
+    switch (actionId) {
+      case 'log-food':
+      case 'log-breakfast':
+      case 'log-lunch':
+      case 'log-dinner':
+        return <NutritionIcon {...iconProps} />;
+      case 'water':
+        return <WaterDropletIcon {...iconProps} />;
+      case 'mood':
+        return <MoodIcon {...iconProps} />;
+      case 'scan':
+        return <ScanIcon {...iconProps} />;
+      case 'coach':
+        return <CoachIcon {...iconProps} />;
+      case 'progress-photo':
+        return <CameraIcon {...iconProps} />;
+      case 'meal-plan':
+        return <ClipboardIcon {...iconProps} />;
+      case 'timeline':
+        return <CameraIcon {...iconProps} />;
+      default:
+        return <Text style={styles.actionEmoji}>{actionId}</Text>;
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -162,7 +205,7 @@ export default function HomeScreen() {
       >
         {/* Hero Section */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>{getGreeting()}, {userName}! 👋</Text>
+          <Text style={styles.greeting}>{getGreeting()}, {userName}!</Text>
           <Text style={styles.subGreeting}>
             {isFirstTimeUser ? "Welcome to your coaching journey!" : "Let's make today count"}
           </Text>
@@ -174,7 +217,7 @@ export default function HomeScreen() {
             style={styles.sundayBanner}
             onPress={() => router.push('/weekly-checkin')}
           >
-            <Text style={styles.sundayBannerEmoji}>📸</Text>
+            <CameraIcon width={40} height={40} fill={theme.colors.primary} />
             <View style={styles.sundayBannerText}>
               <Text style={styles.sundayBannerTitle}>It's Check-In Sunday!</Text>
               <Text style={styles.sundayBannerSubtitle}>Track progress & update targets</Text>
@@ -273,9 +316,12 @@ export default function HomeScreen() {
             {/* Coach Explanation */}
             {todayLog?.adjustmentMessage && (
               <View style={styles.coachExplanation}>
-                <Text style={styles.coachExplanationText}>
-                  💡 {todayLog.adjustmentMessage}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                  <LightBulbIcon width={16} height={16} fill={theme.colors.primary} style={{ marginTop: 2 }} />
+                  <Text style={[styles.coachExplanationText, { flex: 1 }]}>
+                    {todayLog.adjustmentMessage}
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -292,7 +338,7 @@ export default function HomeScreen() {
                   style={styles.actionButton}
                   onPress={() => router.push(action.route as any)}
                 >
-                  <Text style={styles.actionEmoji}>{action.emoji}</Text>
+                  {getActionIcon(action.id)}
                   <Text style={styles.actionLabel}>{action.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -309,12 +355,15 @@ export default function HomeScreen() {
                 <Text style={styles.streakSubtitle}>Keep it going!</Text>
               </View>
               <View style={styles.streakHeaderRight}>
-                <Text style={styles.streakBadge}>{currentStreak} 🔥</Text>
+                <View style={styles.streakBadge}>
+                  <Text style={styles.streakBadgeText}>{currentStreak}</Text>
+                  <FireIcon width={20} height={20} fill={theme.colors.primary} />
+                </View>
                 <TouchableOpacity
                   style={styles.calendarButton}
                   onPress={() => router.push('/calendar-view')}
                 >
-                  <Text style={styles.calendarButtonText}>📅</Text>
+                  <HistoryIcon width={22} height={22} fill={theme.colors.primary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -348,7 +397,7 @@ export default function HomeScreen() {
               style={styles.workoutCard}
               onPress={() => router.push('/workout-logger')}
             >
-              <Text style={styles.workoutEmoji}>🏋️</Text>
+              <TodaysWorkoutIcon width={48} height={48} fill={theme.colors.primary} />
               <View style={styles.workoutContent}>
                 <Text style={styles.workoutName}>{todayWorkout.workout_name}</Text>
                 <Text style={styles.workoutMeta}>
@@ -366,7 +415,7 @@ export default function HomeScreen() {
             style={styles.mealPlanCTA}
             onPress={() => router.push('/meal-plan')}
           >
-            <Text style={styles.mealPlanCTAEmoji}>📋</Text>
+            <ClipboardIcon width={48} height={48} fill={theme.colors.primary} />
             <View style={styles.mealPlanCTAContent}>
               <Text style={styles.mealPlanCTATitle}>Your Meal Plan</Text>
               <Text style={styles.mealPlanCTAText}>
@@ -383,7 +432,7 @@ export default function HomeScreen() {
             style={styles.coachCTA}
             onPress={() => router.push('/(tabs)/coach')}
           >
-            <Text style={styles.coachCTAEmoji}>🔮</Text>
+            <FutureProgressIcon width={48} height={48} fill={theme.colors.primary} />
             <View style={styles.coachCTAContent}>
               <Text style={styles.coachCTATitle}>See Your Future Progress</Text>
               <Text style={styles.coachCTAText}>
@@ -610,6 +659,11 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  streakBadgeText: {
     fontSize: theme.fontSize.xxl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.encouragement,
@@ -622,9 +676,6 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  calendarButtonText: {
-    fontSize: 22,
   },
   calendarGrid: {
     flexDirection: 'row',

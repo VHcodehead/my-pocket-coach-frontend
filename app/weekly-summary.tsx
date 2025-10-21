@@ -6,6 +6,14 @@ import { theme } from '../src/theme';
 import { foodLogAPI } from '../src/services/api';
 import { generateWeeklySummary, WeeklySummaryReport } from '../src/utils/weeklySummaryReport';
 
+// Import SVG icons
+import PredictionIcon from '../assets/icons/prediction-icon.svg';
+import ProgressIcon from '../assets/icons/progress-icon.svg';
+import StarIcon from '../assets/icons/star-icon.svg';
+import LightBulbIcon from '../assets/icons/light-bulb-icon.svg';
+import GoalsIcon from '../assets/icons/goals-milestones-icon.svg';
+import CoachIcon from '../assets/icons/coach-icon.svg';
+
 export default function WeeklySummaryScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -68,7 +76,10 @@ export default function WeeklySummaryScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Your Week in Review 📊</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <PredictionIcon width={28} height={28} fill={theme.colors.primary} />
+          <Text style={styles.title}>Your Week in Review</Text>
+        </View>
         <Text style={styles.subtitle}>{summary.weekRange}</Text>
       </View>
 
@@ -90,7 +101,10 @@ export default function WeeklySummaryScreen() {
 
       {/* Stats */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📈 Weekly Stats</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <ProgressIcon width={20} height={20} fill={theme.colors.primary} />
+          <Text style={styles.sectionTitle}>Weekly Stats</Text>
+        </View>
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{summary.totalDaysLogged}/7</Text>
@@ -124,7 +138,10 @@ export default function WeeklySummaryScreen() {
       {/* Best Day */}
       {summary.bestDay && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🌟 Best Day</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <StarIcon width={24} height={24} fill={theme.colors.encouragement} style={{ marginTop: -17 }} />
+            <Text style={styles.sectionTitle}>Best Day</Text>
+          </View>
           <View style={styles.bestDayCard}>
             <Text style={styles.bestDayDate}>{summary.bestDay.date}</Text>
             <Text style={styles.bestDayReason}>{summary.bestDay.reason}</Text>
@@ -147,7 +164,10 @@ export default function WeeklySummaryScreen() {
       {/* Insights */}
       {summary.insights.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Insights</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <LightBulbIcon width={24} height={24} fill={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Insights</Text>
+          </View>
           {summary.insights.map((insight, index) => (
             <View key={index} style={styles.insightCard}>
               <Text style={styles.insightText}>{insight}</Text>
@@ -159,7 +179,10 @@ export default function WeeklySummaryScreen() {
       {/* Areas to Improve */}
       {summary.areasToImprove.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Areas to Improve</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <GoalsIcon width={24} height={24} fill={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>Areas to Improve</Text>
+          </View>
           {summary.areasToImprove.map((area, index) => (
             <View key={index} style={styles.improveCard}>
               <Text style={styles.improveText}>{area}</Text>
@@ -174,7 +197,10 @@ export default function WeeklySummaryScreen() {
           style={styles.ctaButton}
           onPress={() => router.push('/(tabs)')}
         >
-          <Text style={styles.ctaButtonText}>Talk to Your Coach 💬</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <CoachIcon width={20} height={20} fill={theme.colors.background} />
+            <Text style={styles.ctaButtonText}>Talk to Your Coach</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.secondaryButton}

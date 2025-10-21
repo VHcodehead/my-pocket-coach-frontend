@@ -3,6 +3,13 @@ import { Tabs } from 'expo-router';
 import { Text, StyleSheet } from 'react-native';
 import { theme } from '../../src/theme';
 
+// Import SVG icons
+import HomeIcon from '../../assets/icons/home-icon.svg';
+import NutritionIcon from '../../assets/icons/nutrition-icon.svg';
+import CoachIcon from '../../assets/icons/coach-icon.svg';
+import TrainingIcon from '../../assets/icons/training-icon.svg';
+import MeIcon from '../../assets/icons/me-icon.svg';
+
 export default function TabsLayout() {
   return (
     <Tabs
@@ -40,7 +47,11 @@ export default function TabsLayout() {
           title: 'Home',
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>🏠</Text>
+            <HomeIcon
+              width={focused ? 26 : 22}
+              height={focused ? 26 : 22}
+              fill={focused ? theme.colors.primary : theme.colors.textMuted}
+            />
           ),
         }}
       />
@@ -50,7 +61,11 @@ export default function TabsLayout() {
           title: 'Nutrition',
           tabBarLabel: 'Nutrition',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>🍽️</Text>
+            <NutritionIcon
+              width={focused ? 26 : 22}
+              height={focused ? 26 : 22}
+              fill={focused ? theme.colors.primary : theme.colors.textMuted}
+            />
           ),
         }}
       />
@@ -60,7 +75,11 @@ export default function TabsLayout() {
           title: 'Coach',
           tabBarLabel: 'Coach',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>💬</Text>
+            <CoachIcon
+              width={focused ? 26 : 22}
+              height={focused ? 26 : 22}
+              fill={focused ? theme.colors.primary : theme.colors.textMuted}
+            />
           ),
         }}
       />
@@ -70,7 +89,11 @@ export default function TabsLayout() {
           title: 'Training',
           tabBarLabel: 'Train',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>💪</Text>
+            <TrainingIcon
+              width={focused ? 26 : 22}
+              height={focused ? 26 : 22}
+              fill={focused ? theme.colors.primary : theme.colors.textMuted}
+            />
           ),
         }}
       />
@@ -80,7 +103,11 @@ export default function TabsLayout() {
           title: 'Me',
           tabBarLabel: 'Me',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>👤</Text>
+            <MeIcon
+              width={focused ? 26 : 22}
+              height={focused ? 26 : 22}
+              fill={focused ? theme.colors.primary : theme.colors.textMuted}
+            />
           ),
         }}
       />

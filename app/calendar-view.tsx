@@ -14,6 +14,10 @@ import { foodLogAPI, trainingAPI } from '../src/services/api';
 import { theme } from '../src/theme';
 import { DailyFoodLog } from '../src/types';
 
+// Import SVG icons
+import TrainingIcon from '../assets/icons/training-icon.svg';
+import SleepIcon from '../assets/icons/sleep-icon.svg';
+
 interface WeekDay {
   date: Date;
   dateString: string;
@@ -232,9 +236,12 @@ export default function CalendarViewScreen() {
                 {/* Workout Indicator */}
                 {day.workoutName && (
                   <View style={styles.workoutBadge}>
-                    <Text style={styles.workoutBadgeText}>
-                      {day.workoutName.toLowerCase() === 'rest' ? '😴' : '🏋️'} {day.workoutName}
-                    </Text>
+                    {day.workoutName.toLowerCase() === 'rest' ? (
+                      <SleepIcon width={16} height={16} fill={theme.colors.text} />
+                    ) : (
+                      <TrainingIcon width={16} height={16} fill={theme.colors.text} />
+                    )}
+                    <Text style={styles.workoutBadgeText}>{day.workoutName}</Text>
                   </View>
                 )}
 
@@ -453,6 +460,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   workoutBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: theme.colors.secondary + '20',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
