@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
   Modal,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { trainingAPI } from '../src/services/api';
@@ -22,6 +23,7 @@ interface Exercise {
   equipment?: string;
   difficulty?: string;
   instructions?: string;
+  youtube_url?: string;
   tips?: string;
 }
 
@@ -340,6 +342,19 @@ export default function TrainingExercisesScreen() {
                 </View>
               </View>
 
+              {/* Video Tutorial */}
+              {selectedExercise.youtube_url && (
+                <View style={styles.modalSection}>
+                  <TouchableOpacity
+                    style={styles.videoButton}
+                    onPress={() => Linking.openURL(selectedExercise.youtube_url!)}
+                  >
+                    <Text style={styles.videoButtonIcon}>▶️</Text>
+                    <Text style={styles.videoButtonText}>Watch Form Tutorial</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {/* Description */}
               {selectedExercise.description && (
                 <View style={styles.modalSection}>
@@ -616,5 +631,23 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: theme.colors.text,
     lineHeight: 24,
+  },
+  videoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF0000',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.md,
+  },
+  videoButtonIcon: {
+    fontSize: 20,
+    marginRight: theme.spacing.sm,
+  },
+  videoButtonText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: '#FFFFFF',
   },
 });

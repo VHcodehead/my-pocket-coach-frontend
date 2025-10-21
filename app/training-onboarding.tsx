@@ -1,6 +1,6 @@
 // Training onboarding screen - Multi-step wizard
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { theme } from '../src/theme';
 import { trainingAPI } from '../src/services/api';
@@ -68,8 +68,22 @@ export default function TrainingOnboardingScreen() {
   const [injuries, setInjuries] = useState<string[]>([]);
   const [customInjury, setCustomInjury] = useState('');
 
-  // Loading
+  // Loading & generation status
   const [generating, setGenerating] = useState(false);
+  const [jobId, setJobId] = useState<number | null>(null);
+  const [generationStatus, setGenerationStatus] = useState<string>('');
+  const [progressPercentage, setProgressPercentage] = useState(0);
+  const [generationStepMessage, setGenerationStepMessage] = useState('');
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const experienceLevels: { value: ExperienceLevel; label: string; description: string }[] = [
     { value: 'beginner', label: 'Beginner', description: '0-1 years of consistent training' },
@@ -132,10 +146,89 @@ export default function TrainingOnboardingScreen() {
     }
   };
 
+  const handleDismissProgress = () => {
+    // Stop polling but keep generation running in background
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    setGenerating(false);
+
+    // Navigate to training tab where they can see the plan when ready
+    Alert.alert(
+      'Plan Generating',
+      'Your training plan is being generated in the background. Check back in 5-10 minutes under the Training tab!',
+      [
+        {
+          text: 'Got it',
+          onPress: () => router.replace('/(tabs)/training'),
+        },
+      ]
+    );
+  };
+
+  const pollJobStatus = async (jobIdToPoll: number) => {
+    try {
+      const response = await trainingAPI.checkPlanStatus(jobIdToPoll);
+
+      if (response.success && response.data) {
+        const { status, progressPercentage, currentStep, trainingPlanId, errorMessage } = response.data;
+
+        setGenerationStatus(status);
+        setProgressPercentage(progressPercentage || 0);
+        setGenerationStepMessage(currentStep || '');
+
+        console.log(`[TRAINING_ONBOARDING] Status: ${status}, Progress: ${progressPercentage}%`);
+
+        // Check if completed
+        if (status === 'completed' && trainingPlanId) {
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          setGenerating(false);
+          console.log('[TRAINING_ONBOARDING] Plan generated successfully!');
+
+          Alert.alert(
+            'Training Plan Created!',
+            `Your ${experienceLevel} ${primaryGoal} program is ready. ${trainingDays} workouts per week, ${timePerSession} minutes each.`,
+            [
+              {
+                text: 'View My Program',
+                onPress: () => router.replace('/(tabs)/training'),
+              },
+            ]
+          );
+        }
+
+        // Check if failed
+        if (status === 'failed') {
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          setGenerating(false);
+          console.error('[TRAINING_ONBOARDING] Generation failed:', errorMessage);
+
+          Alert.alert(
+            'Generation Failed',
+            errorMessage || 'Failed to generate training plan. Please try again.',
+            [{ text: 'OK' }]
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error('[TRAINING_ONBOARDING] Polling error:', error);
+      // Don't stop polling on network errors - might be temporary
+    }
+  };
+
   const handleGeneratePlan = async () => {
     try {
       setGenerating(true);
-      console.log('[TRAINING_ONBOARDING] Generating plan...');
+      setProgressPercentage(0);
+      setGenerationStepMessage('Initializing...');
+      console.log('[TRAINING_ONBOARDING] Starting plan generation...');
 
       const onboardingData = {
         experienceLevel: experienceLevel!,
@@ -146,28 +239,28 @@ export default function TrainingOnboardingScreen() {
         injuryHistory: injuries.length > 0 ? injuries : undefined,
       };
 
+      // Start generation - returns immediately with jobId
       const response = await trainingAPI.generatePlan(onboardingData);
 
-      if (response.success) {
-        console.log('[TRAINING_ONBOARDING] Plan generated successfully');
-        Alert.alert(
-          'Training Plan Created! 🎉',
-          `Your ${experienceLevel} ${primaryGoal} program is ready. ${trainingDays} workouts per week, ${timePerSession} minutes each.`,
-          [
-            {
-              text: 'View My Program',
-              onPress: () => router.replace('/(tabs)/training'),
-            },
-          ]
-        );
+      if (response.success && response.data?.jobId) {
+        const newJobId = response.data.jobId;
+        setJobId(newJobId);
+        console.log('[TRAINING_ONBOARDING] Job started:', newJobId);
+
+        // Start polling every 2 seconds
+        pollingIntervalRef.current = setInterval(() => {
+          pollJobStatus(newJobId);
+        }, 2000);
+
+        // Poll immediately once
+        pollJobStatus(newJobId);
       } else {
-        throw new Error(response.error || 'Failed to generate plan');
+        throw new Error(response.error || 'Failed to start generation');
       }
     } catch (error: any) {
       console.error('[TRAINING_ONBOARDING] Generation error:', error);
-      Alert.alert('Error', error.message || 'Failed to generate training plan. Please try again.');
-    } finally {
       setGenerating(false);
+      Alert.alert('Error', error.message || 'Failed to generate training plan. Please try again.');
     }
   };
 
@@ -479,12 +572,68 @@ export default function TrainingOnboardingScreen() {
         )}
       </TouchableOpacity>
 
-      <Text style={styles.generateNote}>This will take 10-15 seconds as I design your custom program</Text>
+      <Text style={styles.generateNote}>
+        This will take 5-10 minutes as I design your custom 12-week program. You can navigate away and come back.
+      </Text>
     </ScrollView>
+  );
+
+  // Progress Modal
+  const renderProgressModal = () => (
+    <Modal
+      visible={generating}
+      transparent
+      animationType="fade"
+      onRequestClose={handleDismissProgress}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* Close Button */}
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={handleDismissProgress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.modalCloseButtonText}>✕</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.modalTitle}>Generating Your Training Plan</Text>
+          <Text style={styles.modalSubtitle}>This will take 5-10 minutes...</Text>
+
+          {/* Progress Bar */}
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
+          </View>
+
+          {/* Progress Percentage */}
+          <Text style={styles.progressPercentageText}>{progressPercentage}%</Text>
+
+          {/* Current Step */}
+          <View style={styles.currentStepContainer}>
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <Text style={styles.currentStepText}>{generationStepMessage || 'Initializing...'}</Text>
+          </View>
+
+          {/* Info */}
+          <View style={styles.modalInfoBox}>
+            <Text style={styles.modalInfoText}>
+              I'm designing your custom 12-week program with progressive overload, periodization, and exercise selection tailored to your goals.
+            </Text>
+          </View>
+
+          <Text style={styles.modalFooterText}>
+            You can close this app and come back - your plan will be ready!
+          </Text>
+        </View>
+      </View>
+    </Modal>
   );
 
   return (
     <View style={styles.container}>
+      {/* Progress Modal */}
+      {renderProgressModal()}
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -968,5 +1117,106 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
+  },
+
+  // Progress Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+    ...theme.shadows.lg,
+  },
+  modalTitle: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.extrabold,
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  modalSubtitle: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  progressBarContainer: {
+    height: 12,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.full,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.md,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+  },
+  progressPercentageText: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  currentStepContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.lg,
+  },
+  currentStepText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  modalInfoBox: {
+    backgroundColor: theme.colors.primary + '15',
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  modalInfoText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    lineHeight: 20,
+  },
+  modalFooterText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: theme.spacing.md,
+    right: theme.spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  modalCloseButtonText: {
+    fontSize: 18,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeight.bold,
   },
 });

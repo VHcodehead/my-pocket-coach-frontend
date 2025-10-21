@@ -1,13 +1,13 @@
-// AI Coach chat screen with ML Predictions Dashboard
+// Coach Tab - AI Intelligence Hub
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, FlatList, ScrollView } from 'react-native';
-import { coachAPI, foodLogAPI, trainingAPI } from '../../src/services/api';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, FlatList, RefreshControl } from 'react-native';
+import { useRouter } from 'expo-router';
 import { theme } from '../../src/theme';
 import { useUser } from '../../src/contexts/UserContext';
+import { coachAPI, foodLogAPI, trainingAPI } from '../../src/services/api';
 import { DailyFoodLog } from '../../src/types';
 import { getSuggestedQuestions, SuggestedQuestion } from '../../src/utils/coachSuggestedQuestions';
-import { HamburgerMenu } from '../../src/components/HamburgerMenu';
-import { MLDashboard } from '../../src/components/MLDashboard';
+import { AIPredictionsDashboard } from '../../src/components/AIPredictionsDashboard';
 
 interface Message {
   id: string;
@@ -17,43 +17,56 @@ interface Message {
 }
 
 export default function CoachScreen() {
+  const router = useRouter();
   const { profile } = useUser();
   const firstName = profile?.fullName?.split(' ')[0] || 'there';
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'ml'>('chat');
+  const [activeView, setActiveView] = useState<'predictions' | 'chat'>('predictions');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [todayLog, setTodayLog] = useState<DailyFoodLog | null>(null);
   const [trainingPlan, setTrainingPlan] = useState<any>(null);
-  const [trainingProgress, setTrainingProgress] = useState<any>(null);
-  const [recentPRs, setRecentPRs] = useState<any[]>([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
-  // Load today's log and training data for context
   useEffect(() => {
-    loadTodayLog();
-    loadTrainingData();
+    loadData();
   }, []);
 
-  // Update welcome message when profile loads
   useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        text: `Hey ${firstName}! I'm your personal nutrition coach, and I'm here 24/7 to support you. Whether it's meal planning, hitting your macros, or just staying motivated - I've got your back. What's on your mind?`,
-        isUser: false,
-        timestamp: new Date(),
-      },
-    ]);
-  }, [firstName]);
+    if (activeView === 'chat' && messages.length === 0) {
+      // Initialize welcome message
+      setMessages([
+        {
+          id: '1',
+          text: `Hey ${firstName}! 👋 I'm your AI coach. I analyze your nutrition, predict your progress, and help you stay on track. What's on your mind?`,
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, [activeView, firstName]);
 
-  // Update suggested questions when log changes
   useEffect(() => {
     const questions = getSuggestedQuestions(todayLog);
     setSuggestedQuestions(questions);
   }, [todayLog]);
+
+  const loadData = async () => {
+    try {
+      await Promise.all([loadTodayLog(), loadTrainingData()]);
+    } catch (error) {
+      console.error('[COACH] Error loading data:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const loadTodayLog = async () => {
     try {
@@ -68,22 +81,9 @@ export default function CoachScreen() {
 
   const loadTrainingData = async () => {
     try {
-      // Load current training plan
       const planResponse = await trainingAPI.getCurrentPlan();
       if (planResponse.success && planResponse.data) {
         setTrainingPlan(planResponse.data);
-      }
-
-      // Load training progress
-      const progressResponse = await trainingAPI.getProgress();
-      if (progressResponse.success && progressResponse.data) {
-        setTrainingProgress(progressResponse.data);
-      }
-
-      // Load recent PRs
-      const prsResponse = await trainingAPI.getPersonalRecords();
-      if (prsResponse.success && prsResponse.data) {
-        setRecentPRs(prsResponse.data.slice(0, 3)); // Only most recent 3 PRs for context
       }
     } catch (error) {
       console.error('[COACH] Error loading training data:', error);
@@ -96,78 +96,88 @@ export default function CoachScreen() {
   };
 
   const handleSendMessage = async (messageText?: string) => {
-    const textToSend = messageText || inputText;
-    if (!textToSend || typeof textToSend !== 'string' || !textToSend.trim() || loading) return;
+    const textToSend = messageText || inputText.trim();
+    if (!textToSend) return;
 
+    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: textToSend.trim(),
+      text: textToSend,
       isUser: true,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setLoading(true);
 
     try {
-      console.log('[COACH] Sending message:', textToSend);
-
-      // Build context object with training data
+      // Build context for AI
       const context: any = {};
 
-      // Add training context if available
+      if (todayLog) {
+        context.nutrition = {
+          calories: todayLog.totals.calories,
+          caloriesTarget: todayLog.targets.calories,
+          protein: todayLog.totals.protein,
+          proteinTarget: todayLog.targets.protein,
+          carbs: todayLog.totals.carbs,
+          carbsTarget: todayLog.targets.carbs,
+          fat: todayLog.totals.fat,
+          fatTarget: todayLog.targets.fat,
+          mealsLogged: todayLog.entries?.length || 0,
+        };
+      }
+
       if (trainingPlan) {
         context.training = {
           hasActivePlan: true,
           experienceLevel: trainingPlan.experience_level,
           primaryGoal: trainingPlan.primary_goal,
-          currentWeek: trainingPlan.current_week,
-          currentBlock: trainingPlan.current_block,
-          workoutsThisWeek: trainingProgress?.workoutsThisWeek || 0,
         };
-
-        // Add recent PRs if available
-        if (recentPRs.length > 0) {
-          context.training.recentPRs = recentPRs.map(pr => ({
-            exercise: pr.exercise_name,
-            weight: pr.weight,
-            reps: pr.reps,
-            date: pr.achieved_at,
-          }));
-        }
       }
 
       const response = await coachAPI.sendMessage(textToSend, context);
 
-      if (response.success && response.data) {
+      if (response.success && response.data?.message) {
         const coachMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: response.data.message || 'I apologize, I had trouble processing that. Could you try rephrasing?',
+          text: response.data.message,
           isUser: false,
           timestamp: new Date(),
         };
-        setMessages((prev) => [...prev, coachMessage]);
-        console.log('[COACH] Coach response received');
+        setMessages(prev => [...prev, coachMessage]);
+
+        // Auto-scroll to bottom
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      } else {
+        throw new Error('No response from coach');
       }
-    } catch (error: any) {
-      console.error('[COACH] Error:', error);
+    } catch (error) {
+      console.error('[COACH] Error sending message:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I'm having trouble connecting right now. Please try again in a moment.",
+        text: "I'm having trouble connecting right now. Please try again in a moment!",
         isUser: false,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[styles.messageContainer, item.isUser ? styles.userMessageContainer : styles.coachMessageContainer]}>
-      <View style={[styles.messageBubble, item.isUser ? styles.userBubble : styles.coachBubble]}>
-        <Text style={[styles.messageText, item.isUser ? styles.userText : styles.coachText]}>
+    <View style={[styles.messageContainer, item.isUser && styles.messageContainerUser]}>
+      {!item.isUser && (
+        <View style={styles.coachAvatar}>
+          <Text style={styles.coachAvatarEmoji}>💬</Text>
+        </View>
+      )}
+      <View style={[styles.messageBubble, item.isUser && styles.messageBubbleUser]}>
+        <Text style={[styles.messageText, item.isUser && styles.messageTextUser]}>
           {item.text}
         </Text>
       </View>
@@ -176,92 +186,125 @@ export default function CoachScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <HamburgerMenu style={styles.menuButton} />
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>24/7 Coach</Text>
-          <Text style={styles.subtitle}>AI Chat & ML Predictions</Text>
-        </View>
+        <Text style={styles.headerTitle}>Your AI Coach</Text>
+        <Text style={styles.headerSubtitle}>Personalized guidance powered by AI</Text>
       </View>
 
-      {/* Tab Switcher */}
-      <View style={styles.tabSwitcher}>
+      {/* View Switcher */}
+      <View style={styles.viewSwitcher}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'chat' && styles.tabActive]}
-          onPress={() => setActiveTab('chat')}
+          style={[styles.viewButton, activeView === 'predictions' && styles.viewButtonActive]}
+          onPress={() => setActiveView('predictions')}
         >
-          <Text style={[styles.tabText, activeTab === 'chat' && styles.tabTextActive]}>
-            💬 AI Chat
+          <Text style={[styles.viewButtonText, activeView === 'predictions' && styles.viewButtonTextActive]}>
+            📊 Predictions
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'ml' && styles.tabActive]}
-          onPress={() => setActiveTab('ml')}
+          style={[styles.viewButton, activeView === 'chat' && styles.viewButtonActive]}
+          onPress={() => setActiveView('chat')}
         >
-          <Text style={[styles.tabText, activeTab === 'ml' && styles.tabTextActive]}>
-            🤖 ML Insights
+          <Text style={[styles.viewButtonText, activeView === 'chat' && styles.viewButtonTextActive]}>
+            💬 Chat
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Conditional Content */}
-      {activeTab === 'chat' ? (
+      {/* Content */}
+      {activeView === 'predictions' ? (
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {/* Description Card */}
+          <View style={styles.descriptionCard}>
+            <Text style={styles.descriptionEmoji}>🔮</Text>
+            <Text style={styles.descriptionTitle}>See Your Future Progress</Text>
+            <Text style={styles.descriptionText}>
+              Based on your current habits, I can predict where you'll be in 30, 60, and 90 days.
+            </Text>
+          </View>
+
+          {/* Predictions Dashboard */}
+          <AIPredictionsDashboard />
+
+          {/* CTA to Chat */}
+          <TouchableOpacity
+            style={styles.chatCTA}
+            onPress={() => setActiveView('chat')}
+          >
+            <Text style={styles.chatCTAEmoji}>💬</Text>
+            <View style={styles.chatCTAContent}>
+              <Text style={styles.chatCTATitle}>Have Questions?</Text>
+              <Text style={styles.chatCTAText}>Chat with me for personalized advice</Text>
+            </View>
+            <Text style={styles.chatCTAArrow}>›</Text>
+          </TouchableOpacity>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      ) : (
         <KeyboardAvoidingView
           style={styles.chatContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={90}
         >
+          {/* Messages */}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          />
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-      />
+          {/* Suggested Questions */}
+          {suggestedQuestions.length > 0 && messages.length <= 1 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.suggestionsScroll}
+              contentContainerStyle={styles.suggestionsContent}
+            >
+              {suggestedQuestions.map((q, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.suggestionButton}
+                  onPress={() => handleSuggestedQuestion(q.text)}
+                >
+                  <Text style={styles.suggestionEmoji}>{q.emoji}</Text>
+                  <Text style={styles.suggestionText}>{q.text}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
 
-      {/* Suggested Questions */}
-      {suggestedQuestions.length > 0 && messages.length <= 1 && (
-        <View style={styles.suggestedQuestionsContainer}>
-          <Text style={styles.suggestedQuestionsTitle}>💡 Try asking me:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestedQuestionsScroll}>
-            {suggestedQuestions.map((question, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.suggestedQuestionButton}
-                onPress={() => handleSuggestedQuestion(question.text)}
-                disabled={loading}
-              >
-                <Text style={styles.suggestedQuestionEmoji}>{question.emoji}</Text>
-                <Text style={styles.suggestedQuestionText}>{question.text}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Ask me anything about your nutrition..."
-          placeholderTextColor={theme.colors.textMuted}
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-          maxLength={500}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, (!inputText || !inputText.trim() || loading) && styles.sendButtonDisabled]}
-          onPress={() => handleSendMessage()}
-          disabled={!inputText || !inputText.trim() || loading}
-        >
-          <Text style={styles.sendButtonText}>{loading ? '💭' : '📤'}</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Ask me anything..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, (!inputText.trim() || loading) && styles.sendButtonDisabled]}
+              onPress={() => handleSendMessage()}
+              disabled={!inputText.trim() || loading}
+            >
+              <Text style={styles.sendButtonText}>{loading ? '⏳' : '➤'}</Text>
+            </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
-      ) : (
-        <MLDashboard />
       )}
     </View>
   );
@@ -273,162 +316,227 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     padding: theme.spacing.xl,
     paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    gap: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
   },
-  tabSwitcher: {
+  headerTitle: {
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.extrabold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  headerSubtitle: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.textSecondary,
+  },
+  viewSwitcher: {
     flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.background,
+    padding: theme.spacing.xs,
+    ...theme.shadows.sm,
+  },
+  viewButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
-  tabActive: {
+  viewButtonActive: {
     backgroundColor: theme.colors.primary,
-    ...theme.shadows.neon,
   },
-  tabText: {
-    fontSize: theme.fontSize.sm,
+  viewButtonText: {
+    fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.textSecondary,
   },
-  tabTextActive: {
+  viewButtonTextActive: {
     color: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+  },
+  descriptionCard: {
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.primary + '15',
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  descriptionEmoji: {
+    fontSize: 48,
+    marginBottom: theme.spacing.sm,
+  },
+  descriptionTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  descriptionText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  chatCTA: {
+    marginHorizontal: theme.spacing.xl,
+    marginTop: theme.spacing.lg,
+    backgroundColor: theme.colors.encouragement + '15',
+    borderWidth: 2,
+    borderColor: theme.colors.encouragement,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  chatCTAEmoji: {
+    fontSize: 40,
+    marginRight: theme.spacing.md,
+  },
+  chatCTAContent: {
+    flex: 1,
+  },
+  chatCTATitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  chatCTAText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+  },
+  chatCTAArrow: {
+    fontSize: 32,
+    color: theme.colors.encouragement,
+    fontWeight: theme.fontWeight.bold,
   },
   chatContainer: {
     flex: 1,
   },
-  menuButton: {
-    marginTop: 4,
-  },
-  titleContainer: {
+  messagesList: {
     flex: 1,
   },
-  title: {
-    fontSize: theme.fontSize.xxxl,
-    fontWeight: theme.fontWeight.extrabold,
-    color: theme.colors.text,
-  },
-  subtitle: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.textSecondary,
-  },
-  messagesList: {
-    padding: theme.spacing.md,
+  messagesContent: {
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing.md,
   },
   messageContainer: {
-    marginBottom: theme.spacing.md,
-  },
-  userMessageContainer: {
-    alignItems: 'flex-end',
-  },
-  coachMessageContainer: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.lg,
     alignItems: 'flex-start',
   },
-  messageBubble: {
-    maxWidth: '80%',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
+  messageContainerUser: {
+    justifyContent: 'flex-end',
   },
-  userBubble: {
+  coachAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.colors.primary,
-    borderBottomRightRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
-  coachBubble: {
+  coachAvatarEmoji: {
+    fontSize: 20,
+  },
+  messageBubble: {
     backgroundColor: theme.colors.surface,
-    borderBottomLeftRadius: 4,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    maxWidth: '75%',
+    ...theme.shadows.sm,
+  },
+  messageBubbleUser: {
+    backgroundColor: theme.colors.primary,
+    marginLeft: 'auto',
   },
   messageText: {
     fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    lineHeight: 22,
   },
-  userText: {
+  messageTextUser: {
     color: theme.colors.background,
   },
-  coachText: {
+  suggestionsScroll: {
+    maxHeight: 100,
+  },
+  suggestionsContent: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  suggestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    marginRight: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  suggestionEmoji: {
+    fontSize: 18,
+    marginRight: theme.spacing.xs,
+  },
+  suggestionText: {
+    fontSize: theme.fontSize.sm,
     color: theme.colors.text,
+    fontWeight: theme.fontWeight.medium,
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: theme.spacing.md,
+    alignItems: 'flex-end',
+    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
     gap: theme.spacing.sm,
   },
   input: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    maxHeight: 100,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    color: theme.colors.text,
-    fontSize: theme.fontSize.md,
-    maxHeight: 100,
   },
   sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     ...theme.shadows.neon,
   },
   sendButtonDisabled: {
+    backgroundColor: theme.colors.textMuted,
     opacity: 0.5,
   },
   sendButtonText: {
+    fontSize: 20,
     color: theme.colors.background,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-  },
-  suggestedQuestionsContainer: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  suggestedQuestionsTitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.sm,
-  },
-  suggestedQuestionsScroll: {
-    flexDirection: 'row',
-  },
-  suggestedQuestionButton: {
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    marginRight: theme.spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  suggestedQuestionEmoji: {
-    fontSize: 16,
-  },
-  suggestedQuestionText: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.primary,
-    fontWeight: theme.fontWeight.semibold,
   },
 });

@@ -36,9 +36,9 @@ export default function TrainingHistoryScreen() {
       setLoading(true);
       const response = await trainingAPI.getHistory();
 
-      if (response.success && response.data) {
-        setLogs(response.data);
-        groupLogsByDate(response.data);
+      if (response.success && response.data?.logs) {
+        setLogs(response.data.logs);
+        groupLogsByDate(response.data.logs);
       }
     } catch (error) {
       console.error('[TRAINING_HISTORY] Load error:', error);

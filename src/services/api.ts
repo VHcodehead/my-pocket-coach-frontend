@@ -8,6 +8,7 @@ import {
   FoodLogEntry,
   WeeklyCheckinResponse,
   Recipe,
+  GoalDateValidationResult,
 } from '../types';
 
 const API_URL = config.API_URL;
@@ -309,7 +310,7 @@ export const mealPlanAPI = {
 
   getCurrent: async (): Promise<APIResponse> => {
     console.log('[API] Fetching current meal plan');
-    return apiFetch('/meal-plan/current');
+    return apiFetch('/weekly-checkin/meal-plan');
   },
 };
 
@@ -547,31 +548,63 @@ export const photoLogAPI = {
   },
 };
 
-// ============ ML PREDICTIONS ENDPOINTS ============
+// ============ AI PREDICTIONS ENDPOINTS ============
 
-export const mlPredictionsAPI = {
-  // Get ML prediction history with trends
-  getHistory: async (): Promise<APIResponse> => {
-    console.log('[API] Fetching ML prediction history');
-    return apiFetch('/api/ml/history');
+export const predictionsAPI = {
+  // Get weight prediction (AI-powered)
+  getWeightPrediction: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching AI weight prediction');
+    return apiFetch('/api/predictions/weight');
   },
 
-  // Get latest ML predictions from last check-in
-  getLatest: async (): Promise<APIResponse> => {
-    console.log('[API] Fetching latest ML predictions');
-    return apiFetch('/api/ml/latest');
+  // Get deload prediction (AI-powered)
+  getDeloadPrediction: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching AI deload prediction');
+    return apiFetch('/api/predictions/deload');
   },
 
-  // Get weight prediction trend data
-  getWeightTrends: async (): Promise<APIResponse> => {
-    console.log('[API] Fetching weight prediction trends');
-    return apiFetch('/api/ml/trends/weight');
+  // Get goal timeline prediction
+  getGoalPrediction: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching goal timeline prediction');
+    return apiFetch('/api/predictions/goal');
   },
 
-  // Get deload risk over time
-  getDeloadTrends: async (): Promise<APIResponse> => {
-    console.log('[API] Fetching deload risk trends');
-    return apiFetch('/api/ml/trends/deload');
+  // Get progression recommendation for specific exercise
+  getProgressionRecommendation: async (exerciseName: string): Promise<APIResponse> => {
+    console.log('[API] Fetching progression recommendation for', exerciseName);
+    return apiFetch(`/api/predictions/progression/${encodeURIComponent(exerciseName)}`);
+  },
+
+  // Get all predictions at once
+  getAllPredictions: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching all AI predictions');
+    return apiFetch('/api/predictions/all');
+  },
+
+  // Get prediction history
+  getPredictionHistory: async (limit: number = 10): Promise<APIResponse> => {
+    console.log('[API] Fetching prediction history');
+    return apiFetch(`/api/predictions/history?limit=${limit}`);
+  },
+};
+
+// ============ GOAL DATE VALIDATION ENDPOINT ============
+
+export const goalDateAPI = {
+  // Validate goal date in real-time
+  validateGoalDate: async (data: {
+    currentWeight: number;
+    goalWeight: number;
+    goalDate: string; // ISO date string
+    goal: 'cut' | 'bulk' | 'recomp';
+    bodyfat?: number;
+    height_cm?: number;
+  }): Promise<APIResponse<GoalDateValidationResult>> => {
+    console.log('[API] Validating goal date:', data);
+    return apiFetch('/api/validate-goal-date', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 };
 

@@ -73,7 +73,8 @@ export default function WorkoutLoggerScreen() {
           })),
         }));
 
-        setExercises(initializedExercises);
+        // Load already-logged sets for today and merge with template
+        await resumeWorkoutProgress(initializedExercises, workoutData.id);
 
         // Load weight recommendations
         loadRecommendations(workoutData.id);
@@ -90,11 +91,112 @@ export default function WorkoutLoggerScreen() {
     }
   };
 
+  const resumeWorkoutProgress = async (initializedExercises: Exercise[], workoutTemplateId: number) => {
+    try {
+      // Fetch today's logged sets from backend
+      const today = new Date().toISOString().split('T')[0];
+      const historyResponse = await trainingAPI.getHistory({
+        date: today,
+        workoutTemplateId: workoutTemplateId
+      });
+
+      if (historyResponse.success && historyResponse.data?.logs) {
+        const loggedSets = historyResponse.data.logs;
+
+        // Merge logged sets with template
+        const resumedExercises = initializedExercises.map(ex => {
+          // Find all logged sets for this exercise
+          const exerciseLogs = loggedSets.filter((log: any) =>
+            log.exercise_id === ex.exerciseId ||
+            log.exercise_name === ex.exerciseName
+          );
+
+          if (exerciseLogs.length > 0) {
+            // Update setData with logged information
+            const updatedSetData = ex.setData.map(set => {
+              const loggedSet = exerciseLogs.find((log: any) => log.set_number === set.setNumber);
+
+              if (loggedSet) {
+                return {
+                  ...set,
+                  logged: true,
+                  actualWeight: loggedSet.actual_weight,
+                  actualReps: loggedSet.actual_reps,
+                  rpe: loggedSet.rpe,
+                };
+              }
+              return set;
+            });
+
+            return { ...ex, setData: updatedSetData };
+          }
+
+          return ex;
+        });
+
+        setExercises(resumedExercises);
+
+        // Find first uncompleted set and navigate to it
+        let firstUncompletedFound = false;
+        for (let exIdx = 0; exIdx < resumedExercises.length; exIdx++) {
+          const exercise = resumedExercises[exIdx];
+          const firstUnloggedSetIdx = exercise.setData.findIndex(s => !s.logged);
+
+          if (firstUnloggedSetIdx !== -1) {
+            setCurrentExerciseIndex(exIdx);
+            setCurrentSetIndex(firstUnloggedSetIdx);
+            firstUncompletedFound = true;
+
+            // Show resume notification if user has logged sets
+            const totalLogged = resumedExercises.reduce((sum, ex) =>
+              sum + ex.setData.filter(s => s.logged).length, 0
+            );
+
+            if (totalLogged > 0) {
+              Alert.alert(
+                '✓ Resuming Workout',
+                `You've already logged ${totalLogged} set${totalLogged === 1 ? '' : 's'}. Continuing where you left off!`,
+                [{ text: 'Continue', style: 'default' }]
+              );
+            }
+            break;
+          }
+        }
+
+        // If all sets are logged, show completion
+        if (!firstUncompletedFound) {
+          const totalSets = resumedExercises.reduce((sum, ex) => sum + ex.sets, 0);
+          Alert.alert(
+            'Workout Already Complete! 🎉',
+            `You've logged all ${totalSets} sets for today's workout.`,
+            [
+              {
+                text: 'View Progress',
+                onPress: () => router.push('/training-progress'),
+              },
+              {
+                text: 'Done',
+                onPress: () => router.replace('/(tabs)/training'),
+              },
+            ]
+          );
+        }
+      } else {
+        // No logged sets found, use initialized exercises
+        setExercises(initializedExercises);
+      }
+    } catch (error) {
+      console.error('[WORKOUT_LOGGER] Resume error:', error);
+      // On error, just use initialized exercises (fresh start)
+      setExercises(initializedExercises);
+    }
+  };
+
   const loadRecommendations = async (workoutTemplateId: number) => {
     try {
       const response = await trainingAPI.getNextWeights(workoutTemplateId);
-      if (response.success && response.data) {
-        setRecommendations(response.data);
+      if (response.success && response.data?.recommendations) {
+        setRecommendations(response.data.recommendations);
       }
     } catch (error) {
       console.error('[WORKOUT_LOGGER] Recommendations error:', error);
@@ -110,8 +212,19 @@ export default function WorkoutLoggerScreen() {
     const set = exercise.setData[currentSetIndex];
 
     // Validation
-    if (!weight || !reps) {
+    const trimmedWeight = weight.trim();
+    const trimmedReps = reps.trim();
+
+    if (!trimmedWeight || !trimmedReps) {
       Alert.alert('Required', 'Please enter weight and reps');
+      return;
+    }
+
+    const parsedWeight = parseFloat(trimmedWeight);
+    const parsedReps = parseInt(trimmedReps);
+
+    if (isNaN(parsedWeight) || isNaN(parsedReps) || parsedWeight < 0 || parsedReps < 0) {
+      Alert.alert('Invalid Input', 'Please enter valid numbers for weight and reps');
       return;
     }
 
@@ -119,12 +232,16 @@ export default function WorkoutLoggerScreen() {
       const logData = {
         workoutTemplateId: workout.id,
         exerciseId: exercise.exerciseId,
+        exerciseName: exercise.exerciseName,
         setNumber: set.setNumber,
-        actualWeight: parseFloat(weight),
-        actualReps: parseInt(reps),
+        actualWeight: parsedWeight,
+        actualReps: parsedReps,
         rpe: rpe || undefined,
         notes: notes.trim() || undefined,
       };
+
+      console.log('[WORKOUT_LOGGER] Logging set with data:', JSON.stringify(logData, null, 2));
+      console.log('[WORKOUT_LOGGER] Exercise object:', JSON.stringify(exercise, null, 2));
 
       const response = await trainingAPI.logSet(logData);
 
@@ -134,8 +251,8 @@ export default function WorkoutLoggerScreen() {
         updatedExercises[currentExerciseIndex].setData[currentSetIndex] = {
           ...set,
           logged: true,
-          actualWeight: parseFloat(weight),
-          actualReps: parseInt(reps),
+          actualWeight: parsedWeight,
+          actualReps: parsedReps,
           rpe: rpe || undefined,
         };
         setExercises(updatedExercises);

@@ -37,7 +37,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) => (
             <Text style={[styles.icon, focused && styles.iconActive]}>🏠</Text>
@@ -45,22 +45,22 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="food-log"
+        name="nutrition"
         options={{
-          title: 'Food Log',
-          tabBarLabel: 'Log',
+          title: 'Nutrition',
+          tabBarLabel: 'Nutrition',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>📊</Text>
+            <Text style={[styles.icon, focused && styles.iconActive]}>🍽️</Text>
           ),
         }}
       />
       <Tabs.Screen
-        name="plan"
+        name="coach"
         options={{
-          title: 'Meal Plan',
-          tabBarLabel: 'Plan',
+          title: 'Coach',
+          tabBarLabel: 'Coach',
           tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>🍽️</Text>
+            <Text style={[styles.icon, focused && styles.iconActive]}>💬</Text>
           ),
         }}
       />
@@ -75,20 +75,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="coach"
+        name="me"
         options={{
-          title: '24/7 Coach Chat',
-          tabBarLabel: 'Coach',
-          tabBarIcon: ({ focused }) => (
-            <Text style={[styles.icon, focused && styles.iconActive]}>💬</Text>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarLabel: 'Profile',
+          title: 'Me',
+          tabBarLabel: 'Me',
           tabBarIcon: ({ focused }) => (
             <Text style={[styles.icon, focused && styles.iconActive]}>👤</Text>
           ),

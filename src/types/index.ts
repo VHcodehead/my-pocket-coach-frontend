@@ -17,11 +17,20 @@ export interface UserProfile {
   sex?: 'male' | 'female';
   bodyfat?: number;
   goal?: 'cut' | 'recomp' | 'bulk';
+  goal_weight?: number;
+  goal_date?: string; // ISO date string
   activity?: number;
   meals_per_day?: number;
   diet_type?: string;
   allergens?: string[];
   dislikes?: string[];
+  must_include?: string[];
+  // Goal date system fields (read-only)
+  current_safe_max_rate?: number;
+  goal_date_adjusted?: boolean;
+  original_goal_date?: string;
+  adjustment_reason?: string;
+  aggressive_timeline?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -300,4 +309,27 @@ export interface DeloadRecommendation {
   reason: string;
   confidence: 'high' | 'medium' | 'low';
   triggerData?: any;
+}
+
+// ============================================
+// GOAL DATE VALIDATION TYPES
+// ============================================
+
+export interface SafeRateLimits {
+  maxSafeCutRate: number; // Negative for weight loss (e.g., -6.0 lbs/week)
+  minSafeCutRate: number; // Minimum loss to maintain momentum (e.g., -0.5 lbs/week)
+  maxSafeBulkRate: number; // Positive for weight gain (e.g., +1.0 lbs/week)
+  method: 'bodyfat' | 'bmi' | 'weight' | 'conservative';
+  explanation: string;
+}
+
+export interface GoalDateValidationResult {
+  isValid: boolean; // True if timeline is within safe limits
+  adjustedDate: string | null; // Adjusted date if timeline was unsafe (ISO date)
+  wasAdjusted: boolean; // True if system adjusted the date
+  reason: string | null; // Explanation of adjustment
+  requiredRate: number; // Weekly rate required to hit goal date (lbs/week)
+  adjustedRate: number | null; // Safe rate after adjustment
+  weeksRemaining: number; // Weeks until goal date
+  safeLimits: SafeRateLimits; // Current safe rate limits
 }

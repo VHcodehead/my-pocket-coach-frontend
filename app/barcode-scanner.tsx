@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme } from '../src/theme';
 import config from '../src/config';
 import { foodLogAPI } from '../src/services/api';
@@ -10,6 +10,8 @@ import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../src/uti
 
 export default function BarcodeScannerScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const targetDate = params.date as string | undefined;
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
 
@@ -39,6 +41,16 @@ export default function BarcodeScannerScreen() {
     console.log('[BARCODE] Food data:', JSON.stringify(food, null, 2));
 
     try {
+      // Use targetDate if provided, otherwise current date
+      let logTimestamp: string;
+      if (targetDate) {
+        const targetDateObj = new Date(targetDate);
+        targetDateObj.setHours(12, 0, 0, 0); // Set to noon
+        logTimestamp = targetDateObj.toISOString();
+      } else {
+        logTimestamp = new Date().toISOString();
+      }
+
       await foodLogAPI.createEntry({
         food_name: food.food_name,
         meal_type: getMealTypeByTime(),
@@ -48,6 +60,7 @@ export default function BarcodeScannerScreen() {
         protein: food.protein_g || 0,
         carbs: food.carbs_g || 0,
         fat: food.fat_g || 0,
+        logged_at: logTimestamp,
       });
 
       console.log('[BARCODE] Successfully logged food');

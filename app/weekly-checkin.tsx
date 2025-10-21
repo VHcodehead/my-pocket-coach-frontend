@@ -290,11 +290,11 @@ export default function WeeklyCheckinScreen() {
         console.log('[WEEKLY_CHECKIN] Meal plan generated successfully');
         Alert.alert(
           'Meal Plan Generated! 🎉',
-          'Your new weekly meal plan is ready based on your updated targets. Check the Plan tab!',
+          'Your new weekly meal plan is ready based on your updated targets. Check the Nutrition tab!',
           [
             {
-              text: 'View Plan',
-              onPress: () => router.replace('/(tabs)/plan'),
+              text: 'View Nutrition',
+              onPress: () => router.replace('/(tabs)/nutrition'),
             },
             {
               text: 'Done',
@@ -634,6 +634,69 @@ export default function WeeklyCheckinScreen() {
             <Text style={styles.resultSubtext}>
               Logged {results.adherence.daysLogged}/7 days
             </Text>
+          </View>
+        )}
+
+        {/* Goal Timeline Prediction */}
+        {results.goalPrediction && (
+          <View style={styles.resultCard}>
+            <Text style={styles.resultLabel}>🎯 Goal Timeline Prediction</Text>
+            <Text style={styles.resultValue}>
+              {results.goalPrediction.weeksToGoal} weeks to goal
+            </Text>
+            <Text style={styles.resultSubtext}>
+              Confidence: {results.goalPrediction.confidenceInterval[0]}-{results.goalPrediction.confidenceInterval[1]} weeks
+            </Text>
+            <View style={[
+              styles.trajectoryBadge,
+              results.goalPrediction.trajectory === 'on_track' && styles.trajectoryOnTrack,
+              results.goalPrediction.trajectory === 'ahead' && styles.trajectoryAhead,
+              results.goalPrediction.trajectory === 'behind' && styles.trajectoryBehind
+            ]}>
+              <Text style={styles.trajectoryText}>
+                {results.goalPrediction.trajectory === 'on_track' ? '✅ On Track' :
+                 results.goalPrediction.trajectory === 'ahead' ? '🚀 Ahead of Schedule' :
+                 '⚠️ Behind Schedule'}
+              </Text>
+            </View>
+            <Text style={styles.predictionRecommendation}>
+              {results.goalPrediction.recommendation}
+            </Text>
+          </View>
+        )}
+
+        {/* Macro Adjustment Recommendation */}
+        {results.macroRecommendation && results.macroRecommendation.shouldAdjust && (
+          <View style={styles.macroRecommendationCard}>
+            <Text style={styles.resultLabel}>📊 Macro Adjustment Needed</Text>
+            <Text style={styles.macroAdjustmentValue}>
+              {results.macroRecommendation.calorieAdjustment > 0 ? '+' : ''}
+              {results.macroRecommendation.calorieAdjustment} calories/day
+            </Text>
+            <Text style={styles.predictionRecommendation}>
+              {results.macroRecommendation.reasoning}
+            </Text>
+            <Text style={styles.confidenceText}>
+              Confidence: {Math.round(results.macroRecommendation.confidence * 100)}%
+            </Text>
+          </View>
+        )}
+
+        {/* Plateau Warnings */}
+        {results.plateauWarnings && results.plateauWarnings.length > 0 && (
+          <View style={styles.plateauCard}>
+            <Text style={styles.resultLabel}>⚠️ Training Plateau Alerts</Text>
+            {results.plateauWarnings.map((warning: any, idx: number) => (
+              <View key={idx} style={styles.plateauWarning}>
+                <Text style={styles.plateauExercise}>{warning.exerciseName}</Text>
+                <Text style={styles.plateauDetail}>
+                  Stalled for {warning.weeksStalled} weeks at {warning.currentWeight} lbs
+                </Text>
+                <Text style={styles.plateauSuggestion}>
+                  💡 {warning.suggestedAction}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
 
@@ -1276,5 +1339,92 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.5,
+  },
+
+  // Prediction UI Styles
+  trajectoryBadge: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    alignSelf: 'flex-start',
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  trajectoryOnTrack: {
+    backgroundColor: '#22c55e20',
+    borderWidth: 1,
+    borderColor: '#22c55e',
+  },
+  trajectoryAhead: {
+    backgroundColor: '#3b82f620',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  trajectoryBehind: {
+    backgroundColor: '#f59e0b20',
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  trajectoryText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+  },
+  predictionRecommendation: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+    marginTop: theme.spacing.sm,
+  },
+  macroRecommendationCard: {
+    backgroundColor: theme.colors.secondary + '10',
+    borderWidth: 1,
+    borderColor: theme.colors.secondary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  macroAdjustmentValue: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.extrabold,
+    color: theme.colors.secondary,
+    marginTop: theme.spacing.xs,
+  },
+  confidenceText: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.sm,
+    fontStyle: 'italic',
+  },
+  plateauCard: {
+    backgroundColor: '#f59e0b10',
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  plateauWarning: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.md,
+  },
+  plateauExercise: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  plateauDetail: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.sm,
+  },
+  plateauSuggestion: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
 });

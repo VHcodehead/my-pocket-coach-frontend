@@ -172,7 +172,7 @@ export default function WeeklySummaryScreen() {
       <View style={styles.ctaSection}>
         <TouchableOpacity
           style={styles.ctaButton}
-          onPress={() => router.push('/(tabs)/coach')}
+          onPress={() => router.push('/(tabs)')}
         >
           <Text style={styles.ctaButtonText}>Talk to Your Coach 💬</Text>
         </TouchableOpacity>

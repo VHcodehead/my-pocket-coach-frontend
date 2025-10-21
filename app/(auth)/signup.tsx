@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
-import { authAPI, mealPlanAPI } from '../../src/services/api';
+import { authAPI, mealPlanAPI, goalDateAPI } from '../../src/services/api';
 import { theme } from '../../src/theme';
 import { ErrorMessages, getUserFriendlyError } from '../../src/utils/errorMessages';
+import { GoalDateValidationResult } from '../../src/types';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -26,12 +27,16 @@ export default function SignupScreen() {
   const [sex, setSex] = useState<'male' | 'female' | ''>('');
   const [bodyfat, setBodyfat] = useState('');
   const [goal, setGoal] = useState<'cut' | 'recomp' | 'bulk' | ''>('');
+  const [goalWeight, setGoalWeight] = useState('');
   const [activity, setActivity] = useState('1.55');
   const [mealsPerDay, setMealsPerDay] = useState('3');
   const [dietType, setDietType] = useState('');
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [mustIncludeFoods, setMustIncludeFoods] = useState('');
   const [dislikes, setDislikes] = useState('');
+  const [goalDate, setGoalDate] = useState('');
+  const [goalDateValidation, setGoalDateValidation] = useState<GoalDateValidationResult | null>(null);
+  const [isValidatingDate, setIsValidatingDate] = useState(false);
 
   const ALLERGEN_OPTIONS = ['dairy', 'nuts', 'peanuts', 'shellfish', 'soy', 'eggs', 'gluten', 'fish'];
 
@@ -80,9 +85,51 @@ export default function SignupScreen() {
     }
   };
 
+  const validateGoalDateAsync = async (dateString: string) => {
+    if (!weight || !goalWeight || !goal) return;
+
+    try {
+      setIsValidatingDate(true);
+
+      const weightNum = parseFloat(weight);
+      const goalWeightNum = parseFloat(goalWeight);
+      const bodyfatNum = bodyfat ? parseFloat(bodyfat) : undefined;
+      const totalInches = parseInt(heightFeet) * 12 + parseInt(heightInches);
+      const heightCm = Math.round(totalInches * 2.54);
+
+      const response = await goalDateAPI.validateGoalDate({
+        currentWeight: weightNum,
+        goalWeight: goalWeightNum,
+        goalDate: dateString,
+        goal: goal as 'cut' | 'bulk' | 'recomp',
+        bodyfat: bodyfatNum,
+        height_cm: heightCm,
+      });
+
+      if (response.success && response.data) {
+        setGoalDateValidation(response.data);
+
+        // If adjusted, auto-update to safe date
+        if (response.data.wasAdjusted && response.data.adjustedDate) {
+          setGoalDate(response.data.adjustedDate);
+        }
+      }
+    } catch (error) {
+      console.error('[SIGNUP] Error validating goal date:', error);
+    } finally {
+      setIsValidatingDate(false);
+    }
+  };
+
   const handleOnboarding = async () => {
     if (!weight || !goal) {
       Alert.alert(ErrorMessages.missingFields.title, 'Please fill in weight and goal');
+      return;
+    }
+
+    // Require goal_weight for cut/bulk goals
+    if ((goal === 'cut' || goal === 'bulk') && !goalWeight) {
+      Alert.alert(ErrorMessages.missingFields.title, 'Please enter your goal weight');
       return;
     }
 
@@ -90,6 +137,25 @@ export default function SignupScreen() {
     if (isNaN(weightNum) || weightNum < 50 || weightNum > 500) {
       Alert.alert(ErrorMessages.invalidWeight.title, ErrorMessages.invalidWeight.message);
       return;
+    }
+
+    // Validate goal weight if provided
+    if (goalWeight) {
+      const goalWeightNum = parseFloat(goalWeight);
+      if (isNaN(goalWeightNum) || goalWeightNum < 50 || goalWeightNum > 500) {
+        Alert.alert('Invalid Goal Weight', 'Please enter a valid goal weight between 50-500 lbs');
+        return;
+      }
+
+      // Validate goal weight makes sense for the goal
+      if (goal === 'cut' && goalWeightNum >= weightNum) {
+        Alert.alert('Invalid Goal Weight', 'For cutting, goal weight should be less than current weight');
+        return;
+      }
+      if (goal === 'bulk' && goalWeightNum <= weightNum) {
+        Alert.alert('Invalid Goal Weight', 'For bulking, goal weight should be more than current weight');
+        return;
+      }
     }
 
     setLoading(true);
@@ -114,6 +180,8 @@ export default function SignupScreen() {
         sex: sex || null,
         bodyfat: bodyfat ? parseFloat(bodyfat) : null,
         goal,
+        goal_weight: goalWeight ? parseFloat(goalWeight) : null,
+        goal_date: goalDate || null,
         activity: parseFloat(activity),
         meals_per_day: parseInt(mealsPerDay),
         diet_type: dietType || null,
@@ -296,6 +364,69 @@ export default function SignupScreen() {
               <Text style={[styles.chipText, goal === 'bulk' && styles.chipTextActive]}>Bulk</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Goal Weight (only for cut/bulk) */}
+          {(goal === 'cut' || goal === 'bulk') && (
+            <>
+              <Text style={styles.label}>Goal Weight (lbs) {goal === 'cut' || goal === 'bulk' ? '*' : ''}</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={goal === 'cut' ? "140" : "180"}
+                placeholderTextColor={theme.colors.textMuted}
+                value={goalWeight}
+                onChangeText={setGoalWeight}
+                keyboardType="numeric"
+              />
+
+              {/* Goal Date (optional) */}
+              <Text style={styles.label}>When do you want to reach your goal? (Optional)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD (e.g., 2026-06-01)"
+                placeholderTextColor={theme.colors.textMuted}
+                value={goalDate}
+                onChangeText={(text) => {
+                  setGoalDate(text);
+                  // Trigger validation when user enters a complete date
+                  if (text.length === 10 && weight && goalWeight) {
+                    validateGoalDateAsync(text);
+                  }
+                }}
+              />
+
+              {/* Validation status */}
+              {isValidatingDate && (
+                <Text style={styles.validatingText}>Validating timeline...</Text>
+              )}
+
+              {/* Adjusted timeline warning */}
+              {goalDateValidation && goalDateValidation.wasAdjusted && (
+                <View style={styles.warningBox}>
+                  <Text style={styles.warningTitle}>⚠️ Timeline Adjusted for Safety</Text>
+                  <Text style={styles.warningText}>
+                    Your original timeline required {Math.abs(goalDateValidation.requiredRate).toFixed(1)} lbs/week.
+                  </Text>
+                  <Text style={styles.warningText}>
+                    Safe maximum: {Math.abs(goalDateValidation.safeLimits.maxSafeCutRate).toFixed(1)} lbs/week
+                  </Text>
+                  <Text style={styles.warningText}>
+                    Adjusted date: {new Date(goalDateValidation.adjustedDate!).toLocaleDateString()}
+                  </Text>
+                  <Text style={styles.reasonText}>{goalDateValidation.reason}</Text>
+                </View>
+              )}
+
+              {/* Safe timeline confirmation */}
+              {goalDateValidation && !goalDateValidation.wasAdjusted && goalDateValidation.isValid && (
+                <View style={styles.successBox}>
+                  <Text style={styles.successText}>✅ Timeline looks great! Safe and sustainable.</Text>
+                  <Text style={styles.successSubtext}>
+                    Required pace: {Math.abs(goalDateValidation.requiredRate).toFixed(1)} lbs/week
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
 
           {/* Activity Level */}
           <Text style={styles.label}>Activity Level</Text>
@@ -703,5 +834,57 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     textAlign: 'center',
     fontWeight: theme.fontWeight.semibold,
+  },
+  validatingText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textMuted,
+    fontStyle: 'italic',
+    marginTop: -theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  warningBox: {
+    backgroundColor: '#FFA50020',
+    borderWidth: 2,
+    borderColor: '#FFA500',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  warningTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: '#FFA500',
+    marginBottom: theme.spacing.sm,
+  },
+  warningText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  reasonText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    fontStyle: 'italic',
+    marginTop: theme.spacing.sm,
+  },
+  successBox: {
+    backgroundColor: '#00FF0020',
+    borderWidth: 2,
+    borderColor: '#00CC00',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  successText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: '#00CC00',
+    marginBottom: theme.spacing.xs,
+  },
+  successSubtext: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
   },
 });

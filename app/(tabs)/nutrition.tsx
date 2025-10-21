@@ -1,4 +1,4 @@
-// Food log screen
+// Nutrition Hub - Unified nutrition screen
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -12,12 +12,12 @@ import { showToast } from '../../src/utils/toast';
 import { MacroDonutChart } from '../../src/components/MacroDonutChart';
 import { FoodEntrySkeleton } from '../../src/components/SkeletonLoader';
 import { copyMealToMultipleDays, getNextNDays, formatDateISO, getFriendlyDateLabel, CopyMealOptions } from '../../src/utils/mealCopy';
-import { HamburgerMenu } from '../../src/components/HamburgerMenu';
 
-export default function FoodLogScreen() {
+export default function NutritionScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date()); // Date being viewed/logged to
   const [todayLog, setTodayLog] = useState<DailyFoodLog | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [yesterdayLog, setYesterdayLog] = useState<DailyFoodLog | null>(null);
@@ -45,7 +45,7 @@ export default function FoodLogScreen() {
   useEffect(() => {
     loadTodayLog();
     loadYesterdayLog();
-  }, []);
+  }, [selectedDate]);
 
   // Refresh when screen comes into focus
   useFocusEffect(
@@ -57,8 +57,15 @@ export default function FoodLogScreen() {
 
   const loadTodayLog = async () => {
     try {
-      console.log('[FOOD_LOG] Loading today\'s log');
-      const response = await foodLogAPI.getToday();
+      const dateString = selectedDate.toISOString().split('T')[0];
+      const isToday = dateString === new Date().toISOString().split('T')[0];
+
+      console.log('[FOOD_LOG] Loading log for:', dateString, '(isToday:', isToday, ')');
+
+      const response = isToday
+        ? await foodLogAPI.getToday()
+        : await foodLogAPI.getDate(dateString);
+
       console.log('[FOOD_LOG] Full API Response:', JSON.stringify(response, null, 2));
 
       if (response.success && response.data) {
@@ -71,6 +78,7 @@ export default function FoodLogScreen() {
         setTodayLog(response.data);
       } else {
         console.log('[FOOD_LOG] Response not successful or no data');
+        setTodayLog(null);
       }
     } catch (error) {
       console.error('[FOOD_LOG] Error loading log:', error);
@@ -101,6 +109,47 @@ export default function FoodLogScreen() {
     await loadTodayLog();
     await loadYesterdayLog();
     setRefreshing(false);
+  };
+
+  // Date navigation helpers
+  const goToPreviousDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 1);
+    // Don't allow future dates
+    const today = new Date();
+    if (newDate <= today) {
+      setSelectedDate(newDate);
+    }
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const isToday = () => {
+    const today = new Date();
+    return selectedDate.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+  };
+
+  const getDateLabel = () => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const selectedStr = selectedDate.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (selectedStr === todayStr) return 'Today';
+    if (selectedStr === yesterdayStr) return 'Yesterday';
+
+    return selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
   const handleCopyYesterday = async () => {
@@ -158,7 +207,7 @@ export default function FoodLogScreen() {
     }
 
     try {
-      console.log('[FOOD_LOG] Adding food:', foodName);
+      console.log('[FOOD_LOG] Adding food:', foodName, 'to date:', selectedDate.toISOString().split('T')[0]);
       const response = await foodLogAPI.createEntry({
         food_name: foodName,
         serving_size: parseFloat(servingSize) || 1,
@@ -168,7 +217,7 @@ export default function FoodLogScreen() {
         carbs: parseFloat(carbs) || 0,
         fat: parseFloat(fat) || 0,
         meal_type: mealType,
-        logged_at: new Date().toISOString(),
+        logged_at: selectedDate.toISOString(),
       });
 
       if (response.success) {
@@ -323,15 +372,94 @@ export default function FoodLogScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
-        <HamburgerMenu style={styles.menuButton} />
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Food Log</Text>
-          <Text style={styles.subtitle}>Every meal logged is progress toward your goals 📊</Text>
+          <Text style={styles.title}>Nutrition</Text>
+          <Text style={styles.subtitle}>Track your meals and hit your targets 🍽️</Text>
         </View>
       </View>
 
+      {/* Date Selector */}
+      <View style={styles.dateSelectorCard}>
+        <TouchableOpacity onPress={goToPreviousDay} style={styles.dateNavButton}>
+          <Text style={styles.dateNavButtonText}>‹</Text>
+        </TouchableOpacity>
+
+        <View style={styles.dateCenterSection}>
+          <Text style={styles.dateLabel}>{getDateLabel()}</Text>
+          {!isToday() && (
+            <TouchableOpacity onPress={goToToday} style={styles.todayButton}>
+              <Text style={styles.todayButtonText}>Go to Today</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <TouchableOpacity
+          onPress={goToNextDay}
+          style={[styles.dateNavButton, isToday() && styles.dateNavButtonDisabled]}
+          disabled={isToday()}
+        >
+          <Text style={[styles.dateNavButtonText, isToday() && styles.dateNavButtonTextDisabled]}>
+            ›
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Quick Logging Options */}
+      <View style={styles.quickActionsCard}>
+        <Text style={styles.quickActionsTitle}>Log Food</Text>
+        <View style={styles.quickActionsGrid}>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => router.push(`/ai-photo-log?date=${selectedDate.toISOString().split('T')[0]}`)}
+          >
+            <Text style={styles.quickActionEmoji}>📸</Text>
+            <Text style={styles.quickActionLabel}>Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => router.push(`/food-search?date=${selectedDate.toISOString().split('T')[0]}`)}
+          >
+            <Text style={styles.quickActionEmoji}>🔍</Text>
+            <Text style={styles.quickActionLabel}>Search</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionButton}
+            onPress={() => router.push(`/barcode-scanner?date=${selectedDate.toISOString().split('T')[0]}`)}
+          >
+            <Text style={styles.quickActionEmoji}>📷</Text>
+            <Text style={styles.quickActionLabel}>Scan</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Meal Plan - FEATURED */}
+      <TouchableOpacity
+        style={styles.mealPlanBanner}
+        onPress={() => router.push('/meal-plan')}
+      >
+        <Text style={styles.mealPlanBannerEmoji}>📋</Text>
+        <View style={styles.mealPlanBannerContent}>
+          <Text style={styles.mealPlanBannerTitle}>Your Meal Plan</Text>
+          <Text style={styles.mealPlanBannerSubtitle}>Personalized weekly nutrition plan</Text>
+        </View>
+        <Text style={styles.mealPlanBannerArrow}>›</Text>
+      </TouchableOpacity>
+
+      {/* Recipe Browser */}
+      <TouchableOpacity
+        style={styles.recipesBanner}
+        onPress={() => router.push('/recipe-library')}
+      >
+        <Text style={styles.recipesBannerEmoji}>🍽️</Text>
+        <View style={styles.recipesBannerContent}>
+          <Text style={styles.recipesBannerTitle}>Browse Recipes</Text>
+          <Text style={styles.recipesBannerSubtitle}>Find meals that fit your macros</Text>
+        </View>
+        <Text style={styles.recipesBannerArrow}>›</Text>
+      </TouchableOpacity>
+
       <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Today's Progress</Text>
+        <Text style={styles.summaryTitle}>Today Progress</Text>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: theme.colors.calories }]}>
@@ -370,6 +498,15 @@ export default function FoodLogScreen() {
             <Text style={styles.summaryLabel}>Fat</Text>
           </View>
         </View>
+
+        {/* Coach Explanation */}
+        {todayLog?.adjustmentMessage && (
+          <View style={styles.coachExplanation}>
+            <Text style={styles.coachExplanationText}>
+              💡 {todayLog.adjustmentMessage}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Macro Balance Chart */}
@@ -391,15 +528,21 @@ export default function FoodLogScreen() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.searchButton}
-              onPress={() => router.push('/food-search?mealType=breakfast')}
+              onPress={() => router.push(`/food-search?mealType=breakfast&date=${selectedDate.toISOString().split('T')[0]}`)}
             >
               <Text style={styles.searchButtonText}>🔍 Find Food</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.barcodeButton}
-              onPress={() => router.push('/barcode-scanner')}
+              onPress={() => router.push(`/barcode-scanner?date=${selectedDate.toISOString().split('T')[0]}`)}
             >
               <Text style={styles.barcodeButtonText}>📱 Scan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.photoLogButton}
+              onPress={() => router.push(`/ai-photo-log?date=${selectedDate.toISOString().split('T')[0]}`)}
+            >
+              <Text style={styles.photoLogButtonText}>📸 AI</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -659,6 +802,165 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: theme.colors.textSecondary,
   },
+  // Date Selector Styles
+  dateSelectorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.sm,
+  },
+  dateNavButton: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateNavButtonDisabled: {
+    opacity: 0.3,
+  },
+  dateNavButtonText: {
+    fontSize: 28,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.bold,
+  },
+  dateNavButtonTextDisabled: {
+    color: theme.colors.textMuted,
+  },
+  dateCenterSection: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+  },
+  dateLabel: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  todayButton: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.primary + '15',
+  },
+  todayButtonText: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  quickActionsCard: {
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.md,
+    marginTop: 0,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.md,
+  },
+  quickActionsTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  quickActionButton: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  quickActionEmoji: {
+    fontSize: 32,
+    marginBottom: theme.spacing.xs,
+  },
+  quickActionLabel: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text,
+    textAlign: 'center',
+  },
+  mealPlanBanner: {
+    backgroundColor: theme.colors.primary + '20',
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+    marginHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...theme.shadows.neon,
+  },
+  mealPlanBannerEmoji: {
+    fontSize: 48,
+    marginRight: theme.spacing.md,
+  },
+  mealPlanBannerContent: {
+    flex: 1,
+  },
+  mealPlanBannerTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.extrabold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  mealPlanBannerSubtitle: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+  },
+  mealPlanBannerArrow: {
+    fontSize: 32,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.bold,
+  },
+  recipesBanner: {
+    backgroundColor: theme.colors.encouragement + '15',
+    borderWidth: 2,
+    borderColor: theme.colors.encouragement,
+    marginHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  recipesBannerEmoji: {
+    fontSize: 40,
+    marginRight: theme.spacing.md,
+  },
+  recipesBannerContent: {
+    flex: 1,
+  },
+  recipesBannerTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  recipesBannerSubtitle: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+  },
+  recipesBannerArrow: {
+    fontSize: 28,
+    color: theme.colors.encouragement,
+    fontWeight: theme.fontWeight.bold,
+  },
   summaryCard: {
     backgroundColor: theme.colors.surface,
     margin: theme.spacing.md,
@@ -671,6 +973,19 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
+  },
+  coachExplanation: {
+    backgroundColor: theme.colors.primary + '10',
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.md,
+  },
+  coachExplanationText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -725,6 +1040,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   barcodeButtonText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+  },
+  photoLogButton: {
+    flex: 1,
+    backgroundColor: '#10b981',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+  },
+  photoLogButtonText: {
     color: theme.colors.background,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,

@@ -144,7 +144,7 @@ export default function PhotoLoggerScreen() {
         SuccessMessages.mealLogged.title,
         `I've added ${result.detectedFoods.length} ${result.detectedFoods.length === 1 ? 'item' : 'items'} to your food log.\n\nTotal: ${Math.round(result.totalNutrition.calories)} calories\n\nKeep up the great tracking!`,
         [
-          { text: 'View Food Log', onPress: () => router.push('/(tabs)/food-log') },
+          { text: 'View Nutrition', onPress: () => router.push('/(tabs)/nutrition') },
           { text: 'Perfect!', onPress: () => router.back() }
         ]
       );
