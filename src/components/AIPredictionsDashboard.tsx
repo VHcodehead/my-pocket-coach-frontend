@@ -242,6 +242,28 @@ export function AIPredictionsDashboard() {
     }
   };
 
+  const getWeeksToGoalColor = (weeksToGoal: number, weeksUntilDeadline?: number | null, trajectory?: string) => {
+    // If no deadline set, use trajectory color
+    if (!weeksUntilDeadline) {
+      return trajectory === 'ahead' ? '#10b981' : trajectory === 'behind' ? '#f59e0b' : theme.colors.primary;
+    }
+
+    const weeksDifference = weeksToGoal - weeksUntilDeadline;
+
+    // Green: On track or ahead (within 2 weeks or ahead)
+    if (weeksDifference <= 2) {
+      return '#10b981'; // Green
+    }
+    // Yellow: Behind but close (2-5 weeks behind)
+    else if (weeksDifference <= 5) {
+      return '#f59e0b'; // Yellow/Orange
+    }
+    // Red: Greatly behind (5+ weeks behind)
+    else {
+      return '#ef4444'; // Red
+    }
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -401,7 +423,10 @@ export function AIPredictionsDashboard() {
 
           <View style={styles.predictionValue}>
             <Text style={styles.predictionLabel}>Time to Goal:</Text>
-            <Text style={styles.predictionNumber}>
+            <Text style={[
+              styles.predictionNumber,
+              { color: getWeeksToGoalColor(goalPred.weeksToGoal, goalPred.weeksUntilDeadline, goalPred.trajectory) }
+            ]}>
               {goalPred.weeksToGoal} weeks
             </Text>
           </View>
