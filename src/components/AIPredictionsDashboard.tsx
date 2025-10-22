@@ -261,6 +261,19 @@ export function AIPredictionsDashboard() {
             Last updated: {new Date(lastCheckinDate).toLocaleDateString()}
           </Text>
         )}
+        {/* Debug: Force clear cache button */}
+        <TouchableOpacity
+          style={{ marginTop: 8, padding: 8, backgroundColor: theme.colors.error, borderRadius: 4 }}
+          onPress={async () => {
+            console.log('[PREDICTIONS] FORCE CLEARING ALL CACHE');
+            await AsyncStorage.removeItem(PREDICTIONS_CACHE_KEY);
+            await AsyncStorage.removeItem(CACHE_TIMESTAMP_KEY);
+            await AsyncStorage.removeItem(PROFILE_SNAPSHOT_KEY);
+            await loadPredictionsWithCache(true);
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 12, textAlign: 'center' }}>🔧 Clear Cache & Refresh</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Weight Prediction Card */}
@@ -387,7 +400,7 @@ export function AIPredictionsDashboard() {
           </View>
 
           <View style={styles.predictionValue}>
-            <Text style={styles.predictionLabel}>12-Week Projection:</Text>
+            <Text style={styles.predictionLabel}>Time to Goal:</Text>
             <Text style={styles.predictionNumber}>
               {goalPred.weeksToGoal} weeks
             </Text>
