@@ -73,32 +73,60 @@ export default function MealPlanScreen() {
           // Sort meals by actual timing
           const sortedMeals = [...mealPlanResponse.data.plan].sort((a, b) => {
             const getTimeValue = (meal: DailyMeal) => {
-              const timingStr = meal.timing || meal.title || '';
+              // Check both timing and title fields for time info
+              const timingStr = (meal.timing || '').toLowerCase();
+              const titleStr = (meal.title || '').toLowerCase();
+              const combinedStr = `${timingStr} ${titleStr}`;
 
               // Extract hour from timing (e.g., "7-8 am" → 7, "4-5 pm" → 16)
-              const amMatch = timingStr.match(/(\d+)(?:-\d+)?\s*am/i);
-              const pmMatch = timingStr.match(/(\d+)(?:-\d+)?\s*pm/i);
+              const amMatch = combinedStr.match(/(\d+)(?:-\d+)?\s*am/i);
+              const pmMatch = combinedStr.match(/(\d+)(?:-\d+)?\s*pm/i);
 
-              if (amMatch) {
-                const hour = parseInt(amMatch[1]);
-                return hour === 12 ? 0 : hour; // 12 am = midnight = 0
-              }
               if (pmMatch) {
                 const hour = parseInt(pmMatch[1]);
-                return hour === 12 ? 12 : hour + 12; // Convert to 24hr
+                const time24 = hour === 12 ? 12 : hour + 12; // Convert to 24hr
+                console.log(`[MEAL_SORT] PM match: ${meal.title} → hour ${hour} → 24hr ${time24}`);
+                return time24;
+              }
+              if (amMatch) {
+                const hour = parseInt(amMatch[1]);
+                const time24 = hour === 12 ? 0 : hour; // 12 am = midnight = 0
+                console.log(`[MEAL_SORT] AM match: ${meal.title} → hour ${hour} → 24hr ${time24}`);
+                return time24;
               }
 
               // Fallback to keyword-based ordering if no time found
-              const title = meal.title.toLowerCase();
-              if (title.includes('breakfast')) return 7;
-              if (title.includes('lunch')) return 12;
-              if (title.includes('dinner')) return 18;
-              if (title.includes('snack')) return 10; // Default snack time
+              if (titleStr.includes('breakfast')) {
+                console.log(`[MEAL_SORT] Keyword match: ${meal.title} → breakfast → 7`);
+                return 7;
+              }
+              if (titleStr.includes('lunch')) {
+                console.log(`[MEAL_SORT] Keyword match: ${meal.title} → lunch → 12`);
+                return 12;
+              }
+              if (titleStr.includes('afternoon') || titleStr.includes('4')) {
+                console.log(`[MEAL_SORT] Keyword match: ${meal.title} → afternoon → 16`);
+                return 16;
+              }
+              if (titleStr.includes('dinner') || titleStr.includes('evening')) {
+                console.log(`[MEAL_SORT] Keyword match: ${meal.title} → dinner → 18`);
+                return 18;
+              }
+              if (titleStr.includes('snack')) {
+                console.log(`[MEAL_SORT] Keyword match: ${meal.title} → snack → 10`);
+                return 10; // Default mid-morning snack
+              }
+              console.log(`[MEAL_SORT] No match: ${meal.title} → 99`);
               return 99;
             };
-            return getTimeValue(a) - getTimeValue(b);
+
+            const timeA = getTimeValue(a);
+            const timeB = getTimeValue(b);
+            console.log(`[MEAL_SORT] Comparing ${a.title} (${timeA}) vs ${b.title} (${timeB})`);
+            return timeA - timeB;
           });
 
+          console.log('[MEAL_SORT] Final sorted order:', sortedMeals.map(m => `${m.title} (${m.timing})`));
           setDailyMeals(sortedMeals);
         }
       }
