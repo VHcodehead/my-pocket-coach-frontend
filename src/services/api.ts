@@ -608,4 +608,14 @@ export const goalDateAPI = {
   },
 };
 
+// ============ MOTIVATIONAL QUOTE ENDPOINT ============
+
+export const quoteAPI = {
+  // Get daily motivational quote (cached by date)
+  getDailyQuote: async (): Promise<APIResponse<{ quote: string; author: string }>> => {
+    console.log('[API] Fetching daily motivational quote');
+    return apiFetch('/api/quote/daily');
+  },
+};
+
 console.log('[API] Service initialized with URL:', API_URL);

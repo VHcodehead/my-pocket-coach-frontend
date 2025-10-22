@@ -4,8 +4,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/services/supabase';
-import { foodLogAPI, trainingAPI } from '../../src/services/api';
+import { foodLogAPI, trainingAPI, quoteAPI } from '../../src/services/api';
 import { theme } from '../../src/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyFoodLog, UserProfile } from '../../src/types';
 import { useUser } from '../../src/contexts/UserContext';
 import { getGreeting } from '../../src/utils/coachFeedback';
@@ -40,6 +41,7 @@ export default function HomeScreen() {
   const [contextualActions, setContextualActions] = useState<QuickAction[]>([]);
   const [trainingPlan, setTrainingPlan] = useState<any>(null);
   const [todayWorkout, setTodayWorkout] = useState<any>(null);
+  const [dailyQuote, setDailyQuote] = useState<{ quote: string; author: string } | null>(null);
 
   // Map action IDs to SVG icons
   const getActionIcon = (actionId: string) => {
@@ -97,7 +99,7 @@ export default function HomeScreen() {
 
   const loadData = async () => {
     try {
-      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData()]);
+      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote()]);
     } catch (error) {
       console.error('[HOME] Error loading data:', error);
     } finally {
@@ -161,6 +163,38 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchDailyQuote = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const cacheKey = `daily_quote_${today}`;
+
+      // Check AsyncStorage cache first
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedQuote = JSON.parse(cached);
+        setDailyQuote(cachedQuote);
+        console.log('[HOME] Using cached quote:', cachedQuote);
+        return;
+      }
+
+      // Fetch from API
+      const response = await quoteAPI.getDailyQuote();
+      if (response.success && response.data) {
+        setDailyQuote(response.data);
+        // Cache for today
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(response.data));
+        console.log('[HOME] Fetched and cached new quote:', response.data);
+      }
+    } catch (error) {
+      console.error('[HOME] Fetch quote error:', error);
+      // Set fallback quote
+      setDailyQuote({
+        quote: "Every day is a new opportunity to become stronger, healthier, and more resilient than yesterday.",
+        author: "Coach"
+      });
+    }
+  };
+
   const fetchTrainingData = async () => {
     try {
       const planResponse = await trainingAPI.getCurrentPlan();
@@ -210,6 +244,14 @@ export default function HomeScreen() {
             {isFirstTimeUser ? "Welcome to your coaching journey!" : "Let's make today count"}
           </Text>
         </View>
+
+        {/* Daily Motivational Quote */}
+        {dailyQuote && (
+          <View style={styles.quoteCard}>
+            <Text style={styles.quoteText}>"{dailyQuote.quote}"</Text>
+            <Text style={styles.quoteAuthor}>— {dailyQuote.author}</Text>
+          </View>
+        )}
 
         {/* Sunday Check-In Banner */}
         {!isFirstTimeUser && new Date().getDay() === 0 && (
@@ -480,6 +522,28 @@ const styles = StyleSheet.create({
   subGreeting: {
     fontSize: theme.fontSize.lg,
     color: theme.colors.textSecondary,
+  },
+  quoteCard: {
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.primary + '10',
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+  },
+  quoteText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    fontStyle: 'italic',
+    lineHeight: 22,
+    marginBottom: theme.spacing.sm,
+  },
+  quoteAuthor: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.fontWeight.semibold,
+    textAlign: 'right',
   },
   sundayBanner: {
     marginHorizontal: theme.spacing.xl,
