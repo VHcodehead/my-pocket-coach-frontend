@@ -8,6 +8,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "privacy": "public",
+    "privacyPolicyUrl": "https://integrativeaisolutions.com/#privacy",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
