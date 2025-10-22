@@ -1,6 +1,6 @@
 // Signup screen with onboarding
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 import { authAPI, mealPlanAPI, goalDateAPI } from '../../src/services/api';
@@ -18,6 +18,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
 
   // Onboarding info
   const [weight, setWeight] = useState('');
@@ -56,6 +57,11 @@ export default function SignupScreen() {
 
     if (password.length < 6) {
       Alert.alert(ErrorMessages.passwordTooShort.title, ErrorMessages.passwordTooShort.message);
+      return;
+    }
+
+    if (!agreedToPrivacy) {
+      Alert.alert('Privacy Policy Required', 'Please agree to the Privacy Policy to continue');
       return;
     }
 
@@ -593,6 +599,25 @@ export default function SignupScreen() {
           secureTextEntry
         />
 
+        {/* Privacy Policy Agreement */}
+        <TouchableOpacity
+          style={styles.privacyCheckbox}
+          onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+        >
+          <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+            {agreedToPrivacy && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+          <Text style={styles.privacyText}>
+            I agree to the{' '}
+            <Text
+              style={styles.privacyLink}
+              onPress={() => Linking.openURL('https://integrativeaisolutions.com/privacy-policy.html')}
+            >
+              Privacy Policy
+            </Text>
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleSignup}
@@ -886,5 +911,42 @@ const styles = StyleSheet.create({
   successSubtext: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.text,
+  },
+  privacyCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: 4,
+    marginRight: theme.spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+  },
+  checkboxChecked: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  checkmark: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+  },
+  privacyText: {
+    flex: 1,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    lineHeight: 20,
+  },
+  privacyLink: {
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
+    textDecorationLine: 'underline',
   },
 });
