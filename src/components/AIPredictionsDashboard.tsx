@@ -1,10 +1,12 @@
 // AI Predictions Dashboard - Replaces broken ML Dashboard
 // Shows GPT-4o-mini powered predictions with auto-adjustments
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { predictionsAPI, checkinAPI } from '../services/api';
 import { theme } from '../theme';
+import { useUser } from '../contexts/UserContext';
 
 // Import SVG icons
 import ProgressIcon from '../../assets/icons/progress-icon.svg';
@@ -14,6 +16,7 @@ import LightBulbIcon from '../../assets/icons/light-bulb-icon.svg';
 
 const PREDICTIONS_CACHE_KEY = '@predictions_cache';
 const CACHE_TIMESTAMP_KEY = '@predictions_cache_timestamp';
+const PROFILE_SNAPSHOT_KEY = '@predictions_profile_snapshot';
 
 interface WeightPrediction {
   predictedChange: number;
@@ -62,6 +65,7 @@ interface GoalPrediction {
 }
 
 export function AIPredictionsDashboard() {
+  const { profile } = useUser();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [weightPred, setWeightPred] = useState<WeightPrediction | null>(null);
@@ -74,6 +78,54 @@ export function AIPredictionsDashboard() {
   useEffect(() => {
     loadPredictionsWithCache();
   }, []);
+
+  // Check for profile changes when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      checkProfileChanges();
+    }, [profile])
+  );
+
+  const checkProfileChanges = async () => {
+    if (!profile) return;
+
+    try {
+      // Create snapshot of relevant profile fields
+      const currentSnapshot = {
+        goalWeight: profile.goal_weight,
+        goalDate: profile.goal_date,
+        currentWeight: profile.weight,
+      };
+
+      // Get cached snapshot
+      const cachedSnapshotStr = await AsyncStorage.getItem(PROFILE_SNAPSHOT_KEY);
+
+      if (cachedSnapshotStr) {
+        const cachedSnapshot = JSON.parse(cachedSnapshotStr);
+
+        // Check if any relevant field changed
+        const profileChanged =
+          cachedSnapshot.goalWeight !== currentSnapshot.goalWeight ||
+          cachedSnapshot.goalDate !== currentSnapshot.goalDate ||
+          cachedSnapshot.currentWeight !== currentSnapshot.currentWeight;
+
+        if (profileChanged) {
+          console.log('[PREDICTIONS] Profile changed, invalidating cache and refreshing...');
+          // Clear cache and refresh
+          await AsyncStorage.removeItem(PREDICTIONS_CACHE_KEY);
+          await AsyncStorage.removeItem(CACHE_TIMESTAMP_KEY);
+          await AsyncStorage.setItem(PROFILE_SNAPSHOT_KEY, JSON.stringify(currentSnapshot));
+          loadPredictionsWithCache(true);
+          return;
+        }
+      } else {
+        // No cached snapshot, save current one
+        await AsyncStorage.setItem(PROFILE_SNAPSHOT_KEY, JSON.stringify(currentSnapshot));
+      }
+    } catch (error) {
+      console.error('[PREDICTIONS] Error checking profile changes:', error);
+    }
+  };
 
   const loadPredictionsWithCache = async (forceRefresh: boolean = false) => {
     try {
@@ -165,7 +217,7 @@ export function AIPredictionsDashboard() {
         <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorTitle}>Unable to Load Predictions</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadPredictions}>
+        <TouchableOpacity style={styles.retryButton} onPress={() => loadPredictionsWithCache(true)}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
