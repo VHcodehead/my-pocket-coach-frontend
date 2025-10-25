@@ -142,6 +142,22 @@ export const authAPI = {
       body: JSON.stringify(profileData),
     });
   },
+
+  checkConsentStatus: async (): Promise<APIResponse> => {
+    console.log('[API] Checking consent status');
+    return apiFetch('/auth/consent/status');
+  },
+
+  saveConsent: async (consentData: {
+    terms_version: string;
+    privacy_version: string;
+  }): Promise<APIResponse> => {
+    console.log('[API] Saving consent');
+    return apiFetch('/auth/consent', {
+      method: 'POST',
+      body: JSON.stringify(consentData),
+    });
+  },
 };
 
 // ============ FOOD LOG ENDPOINTS ============

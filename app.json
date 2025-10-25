@@ -18,6 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mypocketcoach.app",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "We need camera access to let you take progress photos and scan food barcodes for easy logging.",
         "NSPhotoLibraryUsageDescription": "We need photo library access to let you select and upload progress photos.",

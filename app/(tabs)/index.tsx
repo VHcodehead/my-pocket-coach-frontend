@@ -4,7 +4,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/services/supabase';
-import { foodLogAPI, trainingAPI, quoteAPI } from '../../src/services/api';
+import { foodLogAPI, trainingAPI, quoteAPI, authAPI } from '../../src/services/api';
+import { getOuraStatus, OuraStatus } from '../../src/services/ouraAPI';
 import { theme } from '../../src/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyFoodLog, UserProfile } from '../../src/types';
@@ -42,6 +43,9 @@ export default function HomeScreen() {
   const [trainingPlan, setTrainingPlan] = useState<any>(null);
   const [todayWorkout, setTodayWorkout] = useState<any>(null);
   const [dailyQuote, setDailyQuote] = useState<{ quote: string; author: string } | null>(null);
+  const [isDeloadActive, setIsDeloadActive] = useState(false);
+  const [deloadEndDate, setDeloadEndDate] = useState<Date | null>(null);
+  const [ouraStatus, setOuraStatus] = useState<OuraStatus | null>(null);
 
   // Map action IDs to SVG icons
   const getActionIcon = (actionId: string) => {
@@ -98,8 +102,11 @@ export default function HomeScreen() {
   }, [loading, todayLog, currentStreak]);
 
   const loadData = async () => {
+    console.log('[HOME] loadData called');
     try {
-      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote()]);
+      console.log('[HOME] Starting Promise.all...');
+      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus()]);
+      console.log('[HOME] Promise.all completed');
     } catch (error) {
       console.error('[HOME] Error loading data:', error);
     } finally {
@@ -108,24 +115,60 @@ export default function HomeScreen() {
   };
 
   const onRefresh = async () => {
+    console.log('');
+    console.log('🔄🔄🔄 [HOME] REFRESH STARTED 🔄🔄🔄');
+    console.log('');
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
+    console.log('');
+    console.log('✅✅✅ [HOME] REFRESH COMPLETED ✅✅✅');
+    console.log('');
   };
 
   const fetchProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      console.log('[HOME] fetchProfile called');
 
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const response = await authAPI.getProfile();
+      console.log('[HOME] Profile API response:', response);
 
-      if (data) {
-        setProfile(data);
+      if (response.success && response.data) {
+        const profileData = response.data;
+        setProfile(profileData);
+
+        // Check deload status
+        console.log('[HOME] Deload check:', {
+          deload_recommended: profileData.deload_recommended,
+          deload_end_date: profileData.deload_end_date,
+          hasDeloadData: !!(profileData.deload_recommended && profileData.deload_end_date)
+        });
+
+        if (profileData.deload_recommended && profileData.deload_end_date) {
+          const endDate = new Date(profileData.deload_end_date);
+          const now = new Date();
+
+          console.log('[HOME] Deload timing:', {
+            endDate: endDate.toISOString(),
+            now: now.toISOString(),
+            isActive: now < endDate
+          });
+
+          // Only show banner if deload is still active
+          if (now < endDate) {
+            setIsDeloadActive(true);
+            setDeloadEndDate(endDate);
+            console.log('[HOME] ✅ Deload banner SHOULD show');
+          } else {
+            setIsDeloadActive(false);
+            setDeloadEndDate(null);
+            console.log('[HOME] ❌ Deload expired');
+          }
+        } else {
+          setIsDeloadActive(false);
+          setDeloadEndDate(null);
+          console.log('[HOME] ❌ No deload flags in profile');
+        }
       }
     } catch (error) {
       console.error('[HOME] Fetch profile error:', error);
@@ -160,6 +203,18 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('[HOME] Fetch week logs error:', error);
       setWeekLogs([]);
+    }
+  };
+
+  const fetchOuraStatus = async () => {
+    try {
+      console.log('[HOME] Fetching Oura status...');
+      const status = await getOuraStatus();
+      setOuraStatus(status);
+      console.log('[HOME] Oura status:', status);
+    } catch (error) {
+      console.error('[HOME] Error fetching Oura status:', error);
+      // Silently fail - Oura is optional
     }
   };
 
@@ -265,6 +320,59 @@ export default function HomeScreen() {
               <Text style={styles.sundayBannerSubtitle}>Track progress & update targets</Text>
             </View>
             <Text style={styles.sundayBannerArrow}>→</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Deload Week Banner */}
+        {console.log('[HOME] Banner render check:', {
+          isFirstTimeUser,
+          isDeloadActive,
+          hasDeloadEndDate: !!deloadEndDate,
+          shouldShow: !isFirstTimeUser && isDeloadActive && deloadEndDate
+        })}
+        {!isFirstTimeUser && isDeloadActive && deloadEndDate && (
+          <View style={styles.deloadBanner}>
+            <BicepIcon width={40} height={40} fill={theme.colors.primary} />
+            <View style={styles.deloadBannerText}>
+              <Text style={styles.deloadBannerTitle}>Deload Week Active</Text>
+              <Text style={styles.deloadBannerSubtitle}>
+                Reduced volume until {deloadEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Oura Ring Metrics */}
+        {ouraStatus?.connected && ouraStatus?.weekSummary?.dataAvailable && (
+          <TouchableOpacity
+            style={styles.ouraCard}
+            onPress={() => router.push('/oura-settings')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ouraHeader}>
+              <Text style={styles.ouraTitle}>💍 Oura Ring - 7 Day Average</Text>
+              <Text style={styles.ouraChevron}>›</Text>
+            </View>
+            <View style={styles.ouraMetrics}>
+              <View style={styles.ouraMetricItem}>
+                <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgSleep.toFixed(1)}h</Text>
+                <Text style={styles.ouraMetricLabel}>Sleep</Text>
+              </View>
+              <View style={styles.ouraMetricItem}>
+                <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgReadiness}</Text>
+                <Text style={styles.ouraMetricLabel}>Readiness</Text>
+              </View>
+              {ouraStatus.weekSummary.avgHRV && (
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgHRV}ms</Text>
+                  <Text style={styles.ouraMetricLabel}>HRV</Text>
+                </View>
+              )}
+              <View style={styles.ouraMetricItem}>
+                <Text style={styles.ouraMetricValue}>{(ouraStatus.weekSummary.avgSteps / 1000).toFixed(1)}k</Text>
+                <Text style={styles.ouraMetricLabel}>Steps</Text>
+              </View>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -578,6 +686,82 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: theme.colors.primary,
     fontWeight: theme.fontWeight.bold,
+  },
+  deloadBanner: {
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.primary + '15',
+    borderWidth: 2,
+    borderColor: theme.colors.primary + '60',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deloadBannerText: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
+  },
+  deloadBannerTitle: {
+    fontSize: theme.fontSize.h3,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+    marginBottom: 2,
+  },
+  deloadBannerSubtitle: {
+    fontSize: theme.fontSize.body,
+    color: theme.colors.text,
+    opacity: 0.7,
+  },
+  ouraCard: {
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  ouraHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  ouraTitle: {
+    fontSize: theme.fontSize.h3,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+  },
+  ouraChevron: {
+    fontSize: 24,
+    color: theme.colors.textSecondary,
+  },
+  ouraMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  ouraMetricItem: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+  },
+  ouraMetricValue: {
+    fontSize: theme.fontSize.h2,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+    marginBottom: 4,
+  },
+  ouraMetricLabel: {
+    fontSize: theme.fontSize.small,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.fontWeight.semibold,
   },
   onboardingCard: {
     backgroundColor: theme.colors.primary + '15',

@@ -1,9 +1,10 @@
 // Login screen
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { authAPI } from '../../src/services/api';
 import { signInWithGoogle, signInWithApple } from '../../src/services/supabase';
+import { ConsentFlow } from '../../src/components/ConsentFlow';
 import { theme } from '../../src/theme';
 import { ErrorMessages, getUserFriendlyError } from '../../src/utils/errorMessages';
 
@@ -12,6 +13,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showConsentFlow, setShowConsentFlow] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -42,6 +44,25 @@ export default function LoginScreen() {
     }
   };
 
+  const checkConsentAndNavigate = async () => {
+    try {
+      // Check if user needs to accept Terms/Privacy
+      const consentStatus = await authAPI.checkConsentStatus();
+
+      if (consentStatus.success && consentStatus.data?.needsConsent) {
+        console.log('[LOGIN] User needs consent, showing consent flow');
+        setShowConsentFlow(true);
+      } else {
+        console.log('[LOGIN] User has consented, navigating to app');
+        router.replace('/(tabs)');
+      }
+    } catch (error: any) {
+      console.error('[LOGIN] Failed to check consent status:', error);
+      // If check fails, navigate anyway (don't block user)
+      router.replace('/(tabs)');
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     console.log('[LOGIN] Attempting Google OAuth');
@@ -54,8 +75,14 @@ export default function LoginScreen() {
         return;
       }
 
-      console.log('[LOGIN] Google OAuth success');
-      router.replace('/(tabs)');
+      console.log('[LOGIN] Google OAuth success, needsConsent:', result.data?.needsConsent);
+
+      // Check consent status from OAuth response (no separate API call needed)
+      if (result.data?.needsConsent) {
+        setShowConsentFlow(true);
+      } else {
+        router.replace('/(tabs)');
+      }
     } catch (error: any) {
       console.error('[LOGIN] Google OAuth exception:', error);
       Alert.alert('Error', 'An error occurred during Google sign in');
@@ -76,14 +103,36 @@ export default function LoginScreen() {
         return;
       }
 
-      console.log('[LOGIN] Apple OAuth success');
-      router.replace('/(tabs)');
+      console.log('[LOGIN] Apple OAuth success, needsConsent:', result.data?.needsConsent);
+
+      // Check consent status from OAuth response (no separate API call needed)
+      if (result.data?.needsConsent) {
+        setShowConsentFlow(true);
+      } else {
+        router.replace('/(tabs)');
+      }
     } catch (error: any) {
       console.error('[LOGIN] Apple OAuth exception:', error);
       Alert.alert('Error', 'An error occurred during Apple sign in');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConsentComplete = () => {
+    console.log('[LOGIN] Consent flow completed, navigating to app');
+    setShowConsentFlow(false);
+    router.replace('/(tabs)');
+  };
+
+  const handleConsentCancel = async () => {
+    console.log('[LOGIN] User declined consent, logging out');
+    setShowConsentFlow(false);
+    await authAPI.logout();
+    Alert.alert(
+      'Account Removed',
+      'You must accept the Terms of Service and Privacy Policy to use Pocket Coach. Your account has been logged out.'
+    );
   };
 
   return (
@@ -116,6 +165,24 @@ export default function LoginScreen() {
           <Text style={styles.socialButtonText}>Continue with Apple</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Terms & Privacy for OAuth */}
+      <Text style={styles.oauthTermsText}>
+        By continuing, you agree to our{' '}
+        <Text
+          style={styles.oauthTermsLink}
+          onPress={() => Linking.openURL('https://integrativeaisolutions.com/terms-of-service.html')}
+        >
+          Terms of Service
+        </Text>
+        {' '}and{' '}
+        <Text
+          style={styles.oauthTermsLink}
+          onPress={() => Linking.openURL('https://integrativeaisolutions.com/privacy-policy.html')}
+        >
+          Privacy Policy
+        </Text>
+      </Text>
 
       <View style={styles.divider}>
         <View style={styles.dividerLine} />
@@ -157,6 +224,13 @@ export default function LoginScreen() {
           <Text style={styles.link}>New here? Start Your Journey →</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Consent Flow for OAuth users */}
+      <ConsentFlow
+        visible={showConsentFlow}
+        onComplete={handleConsentComplete}
+        onCancel={handleConsentCancel}
+      />
     </ScrollView>
   );
 }
@@ -276,5 +350,17 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     marginHorizontal: theme.spacing.md,
     fontWeight: theme.fontWeight.semibold,
+  },
+  oauthTermsText: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+    lineHeight: 18,
+  },
+  oauthTermsLink: {
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
+    textDecorationLine: 'underline',
   },
 });

@@ -624,7 +624,60 @@ export default function WeeklyCheckinScreen() {
               <Text style={styles.macroLabel}>Fat</Text>
             </View>
           </View>
+          {results.newTargets.totalCalories && (
+            <Text style={styles.resultSubtext}>
+              Total: {results.newTargets.totalCalories} calories/day
+            </Text>
+          )}
         </View>
+
+        {/* Macro Calculation Breakdown */}
+        {results.macroCalculationBreakdown && (
+          <View style={styles.mathBreakdownCard}>
+            <Text style={styles.resultLabel}>🔢 How Your Targets Were Calculated</Text>
+            <Text style={styles.mathExplanation}>{results.macroCalculationBreakdown.explanation}</Text>
+            <View style={styles.mathSteps}>
+              <View style={styles.mathStep}>
+                <Text style={styles.mathStepLabel}>1. BMR (Base Metabolism)</Text>
+                <Text style={styles.mathStepValue}>{results.macroCalculationBreakdown.step1_bmr} cal/day</Text>
+              </View>
+              <View style={styles.mathStep}>
+                <Text style={styles.mathStepLabel}>2. TDEE (With Activity)</Text>
+                <Text style={styles.mathStepValue}>{results.macroCalculationBreakdown.step2_tdee} cal/day</Text>
+              </View>
+              <View style={styles.mathStep}>
+                <Text style={styles.mathStepLabel}>3. Goal Adjustment</Text>
+                <Text style={styles.mathStepValue}>{results.macroCalculationBreakdown.step3_deficitSurplus}</Text>
+              </View>
+              <View style={styles.mathStep}>
+                <Text style={styles.mathStepLabel}>4. Baseline Calories</Text>
+                <Text style={styles.mathStepValue}>{results.macroCalculationBreakdown.step4_baselineCalories} cal/day</Text>
+              </View>
+              {results.macroCalculationBreakdown.step5_metabolicAdjustment !== 0 && (
+                <View style={styles.mathStep}>
+                  <Text style={styles.mathStepLabel}>5. Metabolic Adjustment</Text>
+                  <Text style={styles.mathStepValue}>
+                    {results.macroCalculationBreakdown.step5_metabolicAdjustment > 0 ? '+' : ''}
+                    {results.macroCalculationBreakdown.step5_metabolicAdjustment} cal
+                  </Text>
+                </View>
+              )}
+              {results.macroCalculationBreakdown.step6_aiAdjustment !== 0 && (
+                <View style={styles.mathStep}>
+                  <Text style={styles.mathStepLabel}>6. AI Recovery Adjustment</Text>
+                  <Text style={styles.mathStepValue}>
+                    {results.macroCalculationBreakdown.step6_aiAdjustment > 0 ? '+' : ''}
+                    {results.macroCalculationBreakdown.step6_aiAdjustment} cal
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.mathStep, styles.mathStepFinal]}>
+                <Text style={styles.mathStepLabelFinal}>7. Final Target</Text>
+                <Text style={styles.mathStepValueFinal}>{results.macroCalculationBreakdown.step7_finalCalories} cal/day</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Adherence */}
         {results.adherence && (
@@ -697,6 +750,89 @@ export default function WeeklyCheckinScreen() {
                 </Text>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* AI Insights - Biometrics */}
+        {results.aiInsights?.biometrics && (
+          <View style={[
+            styles.resultCard,
+            results.aiInsights.biometrics.recoveryStatus === 'Poor' && styles.warningCard
+          ]}>
+            <Text style={styles.resultLabel}>
+              {results.aiInsights.biometrics.recoveryStatus === 'Poor' ? '⚠️ Recovery Metrics' : '✅ Recovery Metrics'}
+            </Text>
+            <Text style={styles.resultText}>{results.aiInsights.biometrics.interpretation}</Text>
+            <View style={styles.biometricGrid}>
+              {results.aiInsights.biometrics.sleep && (
+                <View style={styles.biometricItem}>
+                  <Text style={styles.biometricLabel}>Sleep</Text>
+                  <Text style={styles.biometricValue}>{results.aiInsights.biometrics.sleep}hrs</Text>
+                </View>
+              )}
+              {results.aiInsights.biometrics.readiness && (
+                <View style={styles.biometricItem}>
+                  <Text style={styles.biometricLabel}>Readiness</Text>
+                  <Text style={styles.biometricValue}>{results.aiInsights.biometrics.readiness}/100</Text>
+                </View>
+              )}
+              {results.aiInsights.biometrics.hrv && (
+                <View style={styles.biometricItem}>
+                  <Text style={styles.biometricLabel}>HRV</Text>
+                  <Text style={styles.biometricValue}>{results.aiInsights.biometrics.hrv}ms</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* AI Insights - TDEE Calculation */}
+        {results.aiInsights?.tdeeCalculation && (
+          <View style={styles.resultCard}>
+            <Text style={styles.resultLabel}>📊 Dynamic TDEE Calculation</Text>
+            <Text style={styles.resultText}>{results.aiInsights.tdeeCalculation.interpretation}</Text>
+            <View style={styles.tdeeBreakdown}>
+              <Text style={styles.tdeeDetailText}>
+                • {results.aiInsights.tdeeCalculation.workoutDays} workouts over 4 weeks
+              </Text>
+              <Text style={styles.tdeeDetailText}>
+                • {results.aiInsights.tdeeCalculation.avgWorkoutsPerWeek}/week average
+              </Text>
+              <Text style={styles.tdeeDetailText}>
+                • Activity Level: {results.aiInsights.tdeeCalculation.activityLevel}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* AI Insights - Adjustment Reasoning */}
+        {results.aiInsights?.aiAdjustment && (
+          <View style={[
+            styles.resultCard,
+            results.aiInsights.aiAdjustment.isRecoveryPrioritized && styles.recoveryPrioritizedCard
+          ]}>
+            <Text style={styles.resultLabel}>
+              {results.aiInsights.aiAdjustment.isRecoveryPrioritized ? '🧠 Recovery-Prioritized Decision' : '🎯 AI Adjustment'}
+            </Text>
+            <Text style={styles.resultValue}>
+              {results.aiInsights.aiAdjustment.calorieChange > 0 ? '+' : ''}
+              {results.aiInsights.aiAdjustment.calorieChange} calories
+            </Text>
+            <Text style={styles.resultText}>{results.aiInsights.aiAdjustment.interpretation}</Text>
+          </View>
+        )}
+
+        {/* AI Insights - Deload */}
+        {results.aiInsights?.deload && (
+          <View style={styles.deloadCard}>
+            <Text style={styles.resultLabel}>🚨 Deload Triggered</Text>
+            <Text style={styles.resultText}>{results.aiInsights.deload.interpretation}</Text>
+            <View style={styles.deloadDetails}>
+              <Text style={styles.deloadDetailLabel}>Active Triggers:</Text>
+              {results.aiInsights.deload.triggers.map((trigger: string, idx: number) => (
+                <Text key={idx} style={styles.bulletPoint}>• {trigger}</Text>
+              ))}
+            </View>
           </View>
         )}
 
@@ -1426,5 +1562,124 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     lineHeight: 20,
     fontStyle: 'italic',
+  },
+
+  // Macro Calculation Breakdown Styles
+  mathBreakdownCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  mathExplanation: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  mathSteps: {
+    gap: theme.spacing.sm,
+  },
+  mathStep: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  mathStepLabel: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    flex: 1,
+  },
+  mathStepValue: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+  },
+  mathStepFinal: {
+    borderBottomWidth: 0,
+    paddingTop: theme.spacing.md,
+    backgroundColor: theme.colors.primary + '10',
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+  },
+  mathStepLabelFinal: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+    flex: 1,
+  },
+  mathStepValueFinal: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.extrabold,
+    color: theme.colors.primary,
+  },
+
+  // AI Insights Styles
+  warningCard: {
+    backgroundColor: '#f59e0b10',
+    borderColor: '#f59e0b',
+  },
+  biometricGrid: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.md,
+  },
+  biometricItem: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+  },
+  biometricLabel: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+  },
+  biometricValue: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+  },
+  tdeeBreakdown: {
+    marginTop: theme.spacing.md,
+    paddingLeft: theme.spacing.sm,
+  },
+  tdeeDetailText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+    lineHeight: 20,
+  },
+  recoveryPrioritizedCard: {
+    backgroundColor: theme.colors.primary + '10',
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+  },
+  deloadCard: {
+    backgroundColor: '#ef444410',
+    borderWidth: 2,
+    borderColor: '#ef4444',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  deloadDetails: {
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#ef444440',
+  },
+  deloadDetailLabel: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
   },
 });

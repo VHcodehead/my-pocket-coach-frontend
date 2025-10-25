@@ -390,6 +390,18 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Oura Ring Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>💍 Wearables</Text>
+        <TouchableOpacity
+          style={styles.settingRow}
+          onPress={() => router.push('/oura-settings')}
+        >
+          <Text style={styles.settingLabel}>Oura Ring</Text>
+          <Text style={styles.settingChevron}>›</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Notifications Section */}
       <View style={styles.notificationsSection}>
         <Text style={styles.sectionHeader}>📱 Notifications</Text>

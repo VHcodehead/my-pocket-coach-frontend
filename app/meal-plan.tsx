@@ -18,8 +18,8 @@ interface DailyMeal {
   items: {
     name: string;
     grams: number;
-    displayName: string;
-    serving: string;
+    displayName?: string;  // Optional - fallback to name
+    serving?: string;       // Optional - fallback to grams
   }[];
   timing?: string;
   prepTips?: string[];
@@ -360,8 +360,8 @@ export default function MealPlanScreen() {
                 <View style={styles.itemsContainer}>
                   {meal.items.map((item, idx) => (
                     <View key={idx} style={styles.itemRow}>
-                      <Text style={styles.itemName}>• {item.displayName}</Text>
-                      <Text style={styles.itemServing}>{item.serving}</Text>
+                      <Text style={styles.itemName}>• {item.displayName || item.name}</Text>
+                      <Text style={styles.itemServing}>{item.serving || `${item.grams}g`}</Text>
                     </View>
                   ))}
                 </View>

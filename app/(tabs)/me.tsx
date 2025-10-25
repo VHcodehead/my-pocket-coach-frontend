@@ -1,6 +1,6 @@
 // Me Tab - Progress Hub with profile and tracking
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 import { authAPI } from '../../src/services/api';
@@ -275,6 +275,17 @@ export default function MeScreen() {
             <NotificationIcon width={24} height={24} fill={theme.colors.textMuted} />
           </View>
           <Text style={styles.menuLabel}>Notifications</Text>
+          <Text style={styles.menuArrow}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => Linking.openURL('https://apps.apple.com/account/subscriptions')}
+        >
+          <View style={styles.menuIconContainer}>
+            <Text style={styles.menuIcon}>💳</Text>
+          </View>
+          <Text style={styles.menuLabel}>Manage Subscription</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 

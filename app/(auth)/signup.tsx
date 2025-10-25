@@ -61,7 +61,7 @@ export default function SignupScreen() {
     }
 
     if (!agreedToPrivacy) {
-      Alert.alert('Privacy Policy Required', 'Please agree to the Privacy Policy to continue');
+      Alert.alert('Agreement Required', 'Please agree to the Terms of Service and Privacy Policy to continue');
       return;
     }
 
@@ -609,6 +609,13 @@ export default function SignupScreen() {
           </View>
           <Text style={styles.privacyText}>
             I agree to the{' '}
+            <Text
+              style={styles.privacyLink}
+              onPress={() => Linking.openURL('https://integrativeaisolutions.com/terms-of-service.html')}
+            >
+              Terms of Service
+            </Text>
+            {' '}and{' '}
             <Text
               style={styles.privacyLink}
               onPress={() => Linking.openURL('https://integrativeaisolutions.com/privacy-policy.html')}

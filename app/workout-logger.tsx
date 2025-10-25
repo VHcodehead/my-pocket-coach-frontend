@@ -426,6 +426,15 @@ export default function WorkoutLoggerScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Deload Week Indicator */}
+      {workout.workout_type === 'deload' && (
+        <View style={styles.deloadBanner}>
+          <Text style={styles.deloadBannerText}>
+            🔄 Deload Week - Reduced volume for recovery
+          </Text>
+        </View>
+      )}
+
       {/* Progress */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
@@ -751,6 +760,23 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text,
+  },
+  deloadBanner: {
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.primary + '15',
+    borderWidth: 2,
+    borderColor: theme.colors.primary + '60',
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  deloadBannerText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
   progressContainer: {
     padding: theme.spacing.lg,
