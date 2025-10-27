@@ -342,39 +342,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Oura Ring Metrics */}
-        {ouraStatus?.connected && ouraStatus?.weekSummary?.dataAvailable && (
-          <TouchableOpacity
-            style={styles.ouraCard}
-            onPress={() => router.push('/oura-settings')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.ouraHeader}>
-              <Text style={styles.ouraTitle}>💍 Oura Ring - 7 Day Average</Text>
-              <Text style={styles.ouraChevron}>›</Text>
-            </View>
-            <View style={styles.ouraMetrics}>
-              <View style={styles.ouraMetricItem}>
-                <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgSleep.toFixed(1)}h</Text>
-                <Text style={styles.ouraMetricLabel}>Sleep</Text>
-              </View>
-              <View style={styles.ouraMetricItem}>
-                <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgReadiness}</Text>
-                <Text style={styles.ouraMetricLabel}>Readiness</Text>
-              </View>
-              {ouraStatus.weekSummary.avgHRV && (
-                <View style={styles.ouraMetricItem}>
-                  <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgHRV}ms</Text>
-                  <Text style={styles.ouraMetricLabel}>HRV</Text>
-                </View>
-              )}
-              <View style={styles.ouraMetricItem}>
-                <Text style={styles.ouraMetricValue}>{(ouraStatus.weekSummary.avgSteps / 1000).toFixed(1)}k</Text>
-                <Text style={styles.ouraMetricLabel}>Steps</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
 
         {/* First-Time User Onboarding */}
         {isFirstTimeUser && (
@@ -500,15 +467,18 @@ export default function HomeScreen() {
         {streakCalendar.length > 0 && !isFirstTimeUser && (
           <View style={styles.section}>
             <View style={styles.streakHeader}>
-              <View>
+              <TouchableOpacity onPress={() => router.push('/stats')}>
                 <Text style={styles.sectionTitle}>Logging Streak</Text>
-                <Text style={styles.streakSubtitle}>Keep it going!</Text>
-              </View>
+                <Text style={styles.streakSubtitle}>Keep it going! Tap to view stats</Text>
+              </TouchableOpacity>
               <View style={styles.streakHeaderRight}>
-                <View style={styles.streakBadge}>
+                <TouchableOpacity
+                  style={styles.streakBadge}
+                  onPress={() => router.push('/stats')}
+                >
                   <Text style={styles.streakBadgeText}>{currentStreak}</Text>
                   <FireIcon width={20} height={20} fill={theme.colors.primary} />
-                </View>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.calendarButton}
                   onPress={() => router.push('/calendar-view')}
@@ -536,6 +506,43 @@ export default function HomeScreen() {
                 </View>
               ))}
             </View>
+          </View>
+        )}
+
+        {/* Oura Ring Metrics */}
+        {!isFirstTimeUser && ouraStatus?.connected && ouraStatus?.weekSummary?.dataAvailable && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recovery Metrics</Text>
+            <TouchableOpacity
+              style={styles.ouraCard}
+              onPress={() => router.push('/oura-settings')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.ouraHeader}>
+                <Text style={styles.ouraSubtitle}>💍 Oura Ring - 7 Day Average</Text>
+                <Text style={styles.ouraChevron}>›</Text>
+              </View>
+              <View style={styles.ouraMetrics}>
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgSleep.toFixed(1)}h</Text>
+                  <Text style={styles.ouraMetricLabel}>Sleep</Text>
+                </View>
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgReadiness}</Text>
+                  <Text style={styles.ouraMetricLabel}>Readiness</Text>
+                </View>
+                {ouraStatus.weekSummary.avgHRV && (
+                  <View style={styles.ouraMetricItem}>
+                    <Text style={styles.ouraMetricValue}>{ouraStatus.weekSummary.avgHRV}ms</Text>
+                    <Text style={styles.ouraMetricLabel}>HRV</Text>
+                  </View>
+                )}
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{(ouraStatus.weekSummary.avgSteps / 1000).toFixed(1)}k</Text>
+                  <Text style={styles.ouraMetricLabel}>Steps</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -714,16 +721,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   ouraCard: {
-    marginHorizontal: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...theme.shadows.sm,
   },
   ouraHeader: {
     flexDirection: 'row',
@@ -731,10 +732,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
-  ouraTitle: {
-    fontSize: theme.fontSize.h3,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text,
+  ouraSubtitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textSecondary,
   },
   ouraChevron: {
     fontSize: 24,
@@ -748,12 +749,12 @@ const styles = StyleSheet.create({
   ouraMetricItem: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.primary + '10',
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
   },
   ouraMetricValue: {
-    fontSize: theme.fontSize.h2,
+    fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
     marginBottom: 4,
