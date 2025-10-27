@@ -191,6 +191,57 @@ export async function syncOuraData(daysBack: number = 7): Promise<{ daysSynced: 
 }
 
 /**
+ * Auto-sync Oura data if needed (daily check)
+ * Returns immediately, syncs in background if > 24 hours old
+ */
+export async function autoSyncOuraData(): Promise<{
+  syncNeeded: boolean;
+  syncTriggered: boolean;
+  hoursSinceLastSync?: number;
+  reason: string;
+}> {
+  const token = await SecureStore.getItemAsync('auth_token');
+
+  if (!token) {
+    return {
+      syncNeeded: false,
+      syncTriggered: false,
+      reason: 'Not authenticated',
+    };
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/oura/auto-sync`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      console.warn('[OURA_API] Auto-sync check failed:', data.error);
+      return {
+        syncNeeded: false,
+        syncTriggered: false,
+        reason: data.error || 'Failed to check sync status',
+      };
+    }
+
+    return data.data;
+  } catch (error: any) {
+    console.error('[OURA_API] Auto-sync error:', error);
+    return {
+      syncNeeded: false,
+      syncTriggered: false,
+      reason: 'Network error',
+    };
+  }
+}
+
+/**
  * Disconnect Oura Ring
  */
 export async function disconnectOuraRing(): Promise<void> {

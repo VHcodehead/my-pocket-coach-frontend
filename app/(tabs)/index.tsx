@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/services/supabase';
 import { foodLogAPI, trainingAPI, quoteAPI, authAPI } from '../../src/services/api';
-import { getOuraStatus, OuraStatus } from '../../src/services/ouraAPI';
+import { getOuraStatus, autoSyncOuraData, OuraStatus } from '../../src/services/ouraAPI';
 import { theme } from '../../src/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyFoodLog, UserProfile } from '../../src/types';
@@ -105,6 +105,18 @@ export default function HomeScreen() {
     console.log('[HOME] loadData called');
     try {
       console.log('[HOME] Starting Promise.all...');
+      // Trigger auto-sync first (non-blocking), then fetch status
+      autoSyncOuraData().then(result => {
+        if (result.syncTriggered) {
+          console.log(`[HOME] Oura auto-sync triggered (${result.hoursSinceLastSync}h since last sync)`);
+          // Refresh Oura status after 3 seconds to show fresh data
+          setTimeout(() => {
+            console.log('[HOME] Refreshing Oura status after auto-sync...');
+            fetchOuraStatus();
+          }, 3000);
+        }
+      }).catch(err => console.error('[HOME] Auto-sync failed:', err));
+
       await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus()]);
       console.log('[HOME] Promise.all completed');
     } catch (error) {
