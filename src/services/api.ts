@@ -604,6 +604,22 @@ export const predictionsAPI = {
   },
 };
 
+// ============ GAMIFICATION ENDPOINTS ============
+
+export const gamificationAPI = {
+  // Get all streaks (workout and check-in)
+  getStreaks: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching streaks');
+    return apiFetch('/gamification/streaks');
+  },
+
+  // Get all-time stats
+  getAllTimeStats: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching all-time stats');
+    return apiFetch('/gamification/all-time-stats');
+  },
+};
+
 // ============ GOAL DATE VALIDATION ENDPOINT ============
 
 export const goalDateAPI = {

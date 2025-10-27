@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { theme } from '../src/theme';
-import { trainingAPI, foodLogAPI } from '../src/services/api';
+import { trainingAPI, foodLogAPI, gamificationAPI } from '../src/services/api';
 import { calculateCurrentStreak, generate7DayCalendar } from '../src/utils/streakCalendar';
 
 interface PersonalRecord {
@@ -29,11 +29,11 @@ export default function StatsScreen() {
   // Available data
   const [currentStreak, setCurrentStreak] = useState(0);
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
-
-  // Placeholder data (will add backend endpoints later)
   const [workoutStreak, setWorkoutStreak] = useState(0);
+  const [checkinStreak, setCheckinStreak] = useState(0);
   const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [totalVolume, setTotalVolume] = useState(0);
+  const [daysInProgram, setDaysInProgram] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -57,7 +57,20 @@ export default function StatsScreen() {
         setPersonalRecords(prsResponse.data);
       }
 
-      // TODO: Add more data fetching as backend endpoints are created
+      // Fetch workout and check-in streaks
+      const streaksResponse = await gamificationAPI.getStreaks();
+      if (streaksResponse.success && streaksResponse.data) {
+        setWorkoutStreak(streaksResponse.data.workoutStreak || 0);
+        setCheckinStreak(streaksResponse.data.checkinStreak || 0);
+      }
+
+      // Fetch all-time stats
+      const statsResponse = await gamificationAPI.getAllTimeStats();
+      if (statsResponse.success && statsResponse.data) {
+        setTotalWorkouts(statsResponse.data.totalWorkouts || 0);
+        setTotalVolume(statsResponse.data.totalVolume || 0);
+        setDaysInProgram(statsResponse.data.daysInProgram || 0);
+      }
 
     } catch (error) {
       console.error('[STATS] Error loading data:', error);
@@ -110,20 +123,20 @@ export default function StatsScreen() {
             )}
           </View>
 
-          {/* Workout Streak - Coming Soon */}
-          <View style={[styles.streakCard, styles.comingSoon]}>
+          {/* Workout Streak */}
+          <View style={styles.streakCard}>
             <View style={styles.streakRow}>
               <Text style={styles.streakLabel}>Workout Streak</Text>
-              <Text style={styles.comingSoonBadge}>Coming Soon</Text>
+              <Text style={styles.streakValue}>{workoutStreak} days</Text>
             </View>
             <Text style={styles.streakSubtext}>Consecutive workout days</Text>
           </View>
 
-          {/* Check-in Streak - Coming Soon */}
-          <View style={[styles.streakCard, styles.comingSoon]}>
+          {/* Check-in Streak */}
+          <View style={styles.streakCard}>
             <View style={styles.streakRow}>
               <Text style={styles.streakLabel}>Check-in Streak</Text>
-              <Text style={styles.comingSoonBadge}>Coming Soon</Text>
+              <Text style={styles.streakValue}>{checkinStreak} weeks</Text>
             </View>
             <Text style={styles.streakSubtext}>Consecutive weekly check-ins</Text>
           </View>
@@ -169,21 +182,27 @@ export default function StatsScreen() {
           )}
         </View>
 
-        {/* All-Time Stats - Coming Soon */}
+        {/* All-Time Stats */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📊 All-Time Stats</Text>
 
-          <View style={[styles.statsGrid, styles.comingSoon]}>
+          <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>—</Text>
+              <Text style={styles.statValue}>{totalWorkouts}</Text>
               <Text style={styles.statLabel}>Total Workouts</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>—</Text>
-              <Text style={styles.statLabel}>Total Volume</Text>
+              <Text style={styles.statValue}>
+                {totalVolume >= 1000000
+                  ? `${(totalVolume / 1000000).toFixed(1)}M`
+                  : totalVolume >= 1000
+                    ? `${(totalVolume / 1000).toFixed(0)}K`
+                    : totalVolume}
+              </Text>
+              <Text style={styles.statLabel}>Total Volume (lbs)</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>—</Text>
+              <Text style={styles.statValue}>{daysInProgram}</Text>
               <Text style={styles.statLabel}>Days Training</Text>
             </View>
             <View style={styles.statCard}>
@@ -191,10 +210,6 @@ export default function StatsScreen() {
               <Text style={styles.statLabel}>PRs Set</Text>
             </View>
           </View>
-
-          <Text style={styles.comingSoonMessage}>
-            Backend endpoints coming soon for detailed all-time statistics
-          </Text>
         </View>
 
         {/* Achievements - Coming Soon */}
