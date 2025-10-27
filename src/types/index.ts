@@ -98,6 +98,12 @@ export interface WeeklyCheckinResponse {
       tdee: number;
       bmr: number;
     };
+    weekProgression?: {
+      previousWeek: number;
+      newWeek: number;
+      planCompleted: boolean;
+      totalWeeks: number;
+    };
     coachMessage: string;
     nextSteps: string[];
   };

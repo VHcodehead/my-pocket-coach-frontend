@@ -842,6 +842,16 @@ export default function WeeklyCheckinScreen() {
           <Text style={styles.coachMessageText}>{results.coachMessage}</Text>
         </View>
 
+        {/* Next Steps */}
+        {results.nextSteps && results.nextSteps.length > 0 && (
+          <View style={styles.nextStepsCard}>
+            <Text style={styles.nextStepsTitle}>What's Next?</Text>
+            {results.nextSteps.map((step, idx) => (
+              <Text key={idx} style={styles.nextStepItem}>• {step}</Text>
+            ))}
+          </View>
+        )}
+
         {/* Body Composition */}
         {results.bodyComposition && (
           <View style={styles.resultCard}>
@@ -1305,6 +1315,25 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: theme.colors.text,
     lineHeight: 22,
+  },
+  nextStepsCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  nextStepsTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  nextStepItem: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    lineHeight: 24,
+    marginBottom: theme.spacing.xs,
   },
   generatePlanButton: {
     backgroundColor: theme.colors.primary,
