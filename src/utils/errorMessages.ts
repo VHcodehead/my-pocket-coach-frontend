@@ -44,7 +44,7 @@ export const ErrorMessages = {
   },
   passwordTooShort: {
     title: "Password Too Short 🔒",
-    message: "For security, passwords need at least 6 characters.",
+    message: "For security, passwords need at least 8 characters.",
   },
   invalidWeight: {
     title: "Weight Check ⚖️",
@@ -118,6 +118,20 @@ export const ErrorMessages = {
 export function getUserFriendlyError(error: any): { title: string; message: string } {
   const errorMessage = error?.message?.toLowerCase() || '';
   const errorCode = error?.code;
+  const errorDetails = error?.error?.toLowerCase() || '';
+
+  // Backend validation errors (Zod)
+  if (errorDetails.includes('invalid input') || errorMessage.includes('invalid input')) {
+    // Check for password validation in details
+    if (error?.details?.[0]?.message?.includes('at least 8 character')) {
+      return ErrorMessages.passwordTooShort;
+    }
+    // Generic validation error
+    return {
+      title: "Validation Error ✍️",
+      message: error?.details?.[0]?.message || "Please check your input and try again.",
+    };
+  }
 
   // Network errors
   if (errorMessage.includes('network') || errorMessage.includes('connection')) {

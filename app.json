@@ -23,7 +23,16 @@
         "NSCameraUsageDescription": "We need camera access to let you take progress photos and scan food barcodes for easy logging.",
         "NSPhotoLibraryUsageDescription": "We need photo library access to let you select and upload progress photos.",
         "NSPhotoLibraryAddUsageDescription": "We need permission to save your progress photos to your photo library.",
-        "NSUserNotificationsUsageDescription": "We'll send you helpful reminders for meals and workouts to keep you on track with your goals."
+        "NSUserNotificationsUsageDescription": "We'll send you helpful reminders for meals and workouts to keep you on track with your goals.",
+        "NSHealthShareUsageDescription": "Pocket Coach analyzes your sleep, recovery, and activity data from Apple Watch to optimize your training and nutrition plans.",
+        "NSHealthUpdateUsageDescription": "Pocket Coach can save your workout data to Apple Health.",
+        "UIRequiredDeviceCapabilities": [
+          "healthkit"
+        ]
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
       }
     },
     "android": {

@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/services/supabase';
 import { foodLogAPI, trainingAPI, quoteAPI, authAPI } from '../../src/services/api';
 import { getOuraStatus, autoSyncOuraData, OuraStatus } from '../../src/services/ouraAPI';
+import { getAppleWatchStatus, autoSyncHealthKitData, AppleWatchStatus } from '../../src/services/healthKitAPI';
 import { theme } from '../../src/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyFoodLog, UserProfile } from '../../src/types';
@@ -28,6 +29,8 @@ import ScanIcon from '../../assets/icons/scan-icon.svg';
 import CoachIcon from '../../assets/icons/coach-icon.svg';
 import LightBulbIcon from '../../assets/icons/light-bulb-icon.svg';
 import BicepIcon from '../../assets/icons/bicep-icon.svg';
+import ForkKnifeIcon from '../../assets/icons/fork-knife-icon.svg';
+import CircleRingIcon from '../../assets/icons/circle-ring-icon.svg';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -46,16 +49,18 @@ export default function HomeScreen() {
   const [isDeloadActive, setIsDeloadActive] = useState(false);
   const [deloadEndDate, setDeloadEndDate] = useState<Date | null>(null);
   const [ouraStatus, setOuraStatus] = useState<OuraStatus | null>(null);
+  const [appleWatchStatus, setAppleWatchStatus] = useState<AppleWatchStatus | null>(null);
 
   // Map action IDs to SVG icons
   const getActionIcon = (actionId: string) => {
     const iconProps = { width: 32, height: 32, fill: theme.colors.primary };
     switch (actionId) {
       case 'log-food':
+        return <NutritionIcon {...iconProps} />;
       case 'log-breakfast':
       case 'log-lunch':
       case 'log-dinner':
-        return <NutritionIcon {...iconProps} />;
+        return <ForkKnifeIcon {...iconProps} />;
       case 'water':
         return <WaterDropletIcon {...iconProps} />;
       case 'mood':
@@ -115,9 +120,21 @@ export default function HomeScreen() {
             fetchOuraStatus();
           }, 3000);
         }
-      }).catch(err => console.error('[HOME] Auto-sync failed:', err));
+      }).catch(err => console.error('[HOME] Oura auto-sync failed:', err));
 
-      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus()]);
+      // Trigger Apple Watch auto-sync (non-blocking)
+      autoSyncHealthKitData().then(result => {
+        if (result.syncTriggered) {
+          console.log('[HOME] Apple Watch auto-sync triggered');
+          // Refresh Apple Watch status after 3 seconds
+          setTimeout(() => {
+            console.log('[HOME] Refreshing Apple Watch status after auto-sync...');
+            fetchAppleWatchStatus();
+          }, 3000);
+        }
+      }).catch(err => console.error('[HOME] Apple Watch auto-sync failed:', err));
+
+      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus(), fetchAppleWatchStatus()]);
       console.log('[HOME] Promise.all completed');
     } catch (error) {
       console.error('[HOME] Error loading data:', error);
@@ -227,6 +244,18 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('[HOME] Error fetching Oura status:', error);
       // Silently fail - Oura is optional
+    }
+  };
+
+  const fetchAppleWatchStatus = async () => {
+    try {
+      console.log('[HOME] Fetching Apple Watch status...');
+      const status = await getAppleWatchStatus();
+      setAppleWatchStatus(status);
+      console.log('[HOME] Apple Watch status:', status);
+    } catch (error) {
+      console.error('[HOME] Error fetching Apple Watch status:', error);
+      // Silently fail - Apple Watch is optional
     }
   };
 
@@ -531,7 +560,10 @@ export default function HomeScreen() {
               activeOpacity={0.8}
             >
               <View style={styles.ouraHeader}>
-                <Text style={styles.ouraSubtitle}>💍 Oura Ring - 7 Day Average</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <CircleRingIcon width={20} height={20} fill={theme.colors.primary} />
+                  <Text style={styles.ouraSubtitle}>Oura Ring - 7 Day Average</Text>
+                </View>
                 <Text style={styles.ouraChevron}>›</Text>
               </View>
               <View style={styles.ouraMetrics}>
@@ -551,6 +583,43 @@ export default function HomeScreen() {
                 )}
                 <View style={styles.ouraMetricItem}>
                   <Text style={styles.ouraMetricValue}>{(ouraStatus.weekSummary.avgSteps / 1000).toFixed(1)}k</Text>
+                  <Text style={styles.ouraMetricLabel}>Steps</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Apple Watch Metrics */}
+        {!isFirstTimeUser && appleWatchStatus?.connected && appleWatchStatus?.weekSummary?.dataAvailable && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recovery Metrics</Text>
+            <TouchableOpacity
+              style={styles.ouraCard}
+              onPress={() => router.push('/apple-watch-settings')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.ouraHeader}>
+                <Text style={styles.ouraSubtitle}>⌚ Apple Watch - 7 Day Average</Text>
+                <Text style={styles.ouraChevron}>›</Text>
+              </View>
+              <View style={styles.ouraMetrics}>
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{appleWatchStatus.weekSummary.avgSleep.toFixed(1)}h</Text>
+                  <Text style={styles.ouraMetricLabel}>Sleep</Text>
+                </View>
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{appleWatchStatus.weekSummary.avgReadiness}</Text>
+                  <Text style={styles.ouraMetricLabel}>Readiness</Text>
+                </View>
+                {appleWatchStatus.weekSummary.avgHRV && (
+                  <View style={styles.ouraMetricItem}>
+                    <Text style={styles.ouraMetricValue}>{appleWatchStatus.weekSummary.avgHRV}ms</Text>
+                    <Text style={styles.ouraMetricLabel}>HRV</Text>
+                  </View>
+                )}
+                <View style={styles.ouraMetricItem}>
+                  <Text style={styles.ouraMetricValue}>{(appleWatchStatus.weekSummary.avgSteps / 1000).toFixed(1)}k</Text>
                   <Text style={styles.ouraMetricLabel}>Steps</Text>
                 </View>
               </View>

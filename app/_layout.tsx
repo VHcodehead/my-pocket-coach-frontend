@@ -6,6 +6,10 @@ import { theme } from '../src/theme';
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 
+// Initialize Sentry
+import { initSentry, Sentry } from '../src/utils/sentry';
+initSentry();
+
 function AppContent() {
   const { isDark } = useTheme();
 
@@ -28,7 +32,7 @@ function AppContent() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <ThemeProvider>
       <UserProvider>
@@ -37,3 +41,6 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+// Wrap with Sentry for error tracking
+export default Sentry.wrap(RootLayout);

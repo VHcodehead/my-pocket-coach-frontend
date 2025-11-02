@@ -75,7 +75,12 @@ const apiFetch = async (
 
     if (!response.ok) {
       console.error(`[API] Error ${response.status}:`, data);
-      throw new Error(data.error || 'API request failed');
+      // Create error object that preserves validation details
+      const error = new Error(data.error || 'API request failed');
+      (error as any).details = data.details;
+      (error as any).error = data.error;
+      (error as any).code = response.status;
+      throw error;
     }
 
     return data;

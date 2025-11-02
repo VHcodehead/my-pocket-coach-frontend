@@ -1,10 +1,10 @@
 // Account settings screen - edit profile and onboarding data
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../src/services/supabase';
 import { theme } from '../src/theme';
-import { foodLogAPI, trainingAPI, goalDateAPI } from '../src/services/api';
+import { foodLogAPI, trainingAPI, goalDateAPI, mealPlanAPI } from '../src/services/api';
 import { GoalDateValidationResult } from '../src/types';
 import {
   scheduleSmartReminders,
@@ -14,13 +14,16 @@ import {
   analyzeEatingPatterns,
 } from '../src/utils/smartNotifications';
 import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../src/utils/errorMessages';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { onboarding } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [upcomingReminders, setUpcomingReminders] = useState<MealReminderTime[]>([]);
+  const [isOnboardingMode, setIsOnboardingMode] = useState(false); // Track if user is completing initial setup
 
   // Profile data - matching signup exactly
   const [userId, setUserId] = useState('');
@@ -202,6 +205,14 @@ export default function SettingsScreen() {
         setTimePerSession('60');
         setEquipment([]);
         setInjuries([]);
+
+        // Check if this is first-time setup (onboarding mode)
+        // Either coming from signup with onboarding=true param, OR missing basic info
+        const hasBasicInfo = data.weight && data.goal_weight;
+        const isFromSignup = onboarding === 'true';
+        const shouldBeOnboarding = isFromSignup || !hasBasicInfo;
+        setIsOnboardingMode(shouldBeOnboarding);
+        console.log('[SETTINGS] Onboarding mode:', shouldBeOnboarding, '(fromSignup:', isFromSignup, 'hasBasicInfo:', hasBasicInfo, ')');
       }
     } catch (error) {
       console.error('[SETTINGS] Exception:', error);
@@ -347,8 +358,97 @@ export default function SettingsScreen() {
         Alert.alert(friendlyError.title, friendlyError.message);
       } else {
         console.log('[SETTINGS] Profile updated successfully');
+        const wasOnboarding = isOnboardingMode;
+
+        // Check if training onboarding is complete
+        const hasTrainingSetup = workoutLocation && experienceLevel && primaryGoal && equipment.length > 0;
+
+        // Auto-generate meal plan AND training plan in background when completing onboarding
+        if (wasOnboarding) {
+          try {
+            const profile = response.data;
+
+            // Generate meal plan
+            console.log('[SETTINGS] Auto-generating meal plan in background...');
+            mealPlanAPI.generate({
+              profile: {
+                weight: profile.weight,
+                bodyfat: profile.bodyfat,
+                activity: profile.activity || 1.5,
+                goal: profile.goal || 'recomp',
+                mealsPerDay: profile.meals_per_day || 3,
+                sex: profile.sex,
+                age: profile.age,
+                height_cm: profile.height_cm,
+              },
+              diet: {
+                keto: profile.diet_type === 'keto',
+                vegetarian: profile.diet_type === 'vegetarian',
+                vegan: profile.diet_type === 'vegan',
+                halal: profile.diet_type === 'halal',
+                kosher: profile.diet_type === 'kosher',
+                allergens: profile.allergens || [],
+                mustInclude: profile.must_include || [],
+                avoid: profile.dislikes || [],
+              },
+            }).then(() => console.log('[SETTINGS] Initial meal plan generated'))
+              .catch((error) => console.error('[SETTINGS] Meal plan generation failed (non-critical):', error));
+
+            // Generate training plan if training preferences are filled
+            if (hasTrainingSetup) {
+              console.log('[SETTINGS] Auto-generating training plan in background...');
+              trainingAPI.generatePlan({
+                experienceLevel: experienceLevel as 'beginner' | 'intermediate' | 'advanced',
+                primaryGoal: primaryGoal as 'strength' | 'hypertrophy' | 'hybrid',
+                trainingDays: parseInt(trainingDays),
+                timePerSession: parseInt(timePerSession),
+                equipment,
+                injuryHistory: injuries.length > 0 ? injuries : undefined,
+              }).then((res) => {
+                if (res.success) {
+                  console.log('[SETTINGS] Training plan generation started, jobId:', res.data?.jobId);
+                } else {
+                  console.error('[SETTINGS] Training plan generation failed:', res.error);
+                }
+              }).catch((error) => console.error('[SETTINGS] Training plan generation error:', error));
+            } else {
+              console.log('[SETTINGS] Training preferences not filled, skipping training plan generation');
+            }
+          } catch (error) {
+            console.error('[SETTINGS] Plan generation error:', error);
+          }
+        }
+
         Alert.alert(SuccessMessages.profileUpdated.title, SuccessMessages.profileUpdated.message, [
-          { text: 'Perfect!', onPress: () => router.back() }
+          {
+            text: 'Perfect!',
+            onPress: async () => {
+              console.log('[SETTINGS] Save complete - wasOnboarding:', wasOnboarding, 'hasTrainingSetup:', hasTrainingSetup);
+
+              if (wasOnboarding) {
+                // If training not complete, go to training onboarding
+                if (!hasTrainingSetup) {
+                  console.log('[SETTINGS] Redirecting to training onboarding');
+                  router.replace('/training-onboarding');
+                } else {
+                  // Both nutrition and training complete, check for tutorial
+                  console.log('[SETTINGS] Training already complete, checking tutorial status');
+                  const tutorialCompleted = await AsyncStorage.getItem('tutorial_completed');
+                  console.log('[SETTINGS] Tutorial completed status:', tutorialCompleted);
+                  if (!tutorialCompleted) {
+                    console.log('[SETTINGS] Redirecting to tutorial');
+                    router.replace('/app-tutorial');
+                  } else {
+                    console.log('[SETTINGS] Tutorial complete, going to dashboard');
+                    router.replace('/(tabs)');
+                  }
+                }
+              } else {
+                console.log('[SETTINGS] Not onboarding, going back');
+                router.back();
+              }
+            }
+          }
         ]);
       }
     } catch (error: any) {
@@ -368,14 +468,28 @@ export default function SettingsScreen() {
     );
   }
 
+  const handleBackPress = () => {
+    if (isOnboardingMode) {
+      // During onboarding, go to dashboard instead of back to login
+      router.replace('/(tabs)');
+    } else {
+      // Normal edit mode - go back to previous screen
+      router.back();
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={handleBackPress}>
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Your Profile</Text>
-        <Text style={styles.subtitle}>Keep your info up to date so I can support you better ✨</Text>
+        <Text style={styles.title}>{isOnboardingMode ? 'Complete Your Profile' : 'Your Profile'}</Text>
+        <Text style={styles.subtitle}>
+          {isOnboardingMode
+            ? 'Let me get to know you better so I can create your personalized plan ✨'
+            : 'Keep your info up to date so I can support you better ✨'}
+        </Text>
       </View>
 
       {/* Theme Section */}
@@ -398,6 +512,13 @@ export default function SettingsScreen() {
           onPress={() => router.push('/oura-settings')}
         >
           <Text style={styles.settingLabel}>Oura Ring</Text>
+          <Text style={styles.settingChevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingRow}
+          onPress={() => router.push('/apple-watch-settings')}
+        >
+          <Text style={styles.settingLabel}>Apple Watch</Text>
           <Text style={styles.settingChevron}>›</Text>
         </TouchableOpacity>
       </View>
@@ -894,8 +1015,20 @@ export default function SettingsScreen() {
           disabled={saving}
         >
           <Text style={styles.saveButtonText}>
-            {saving ? '💭 Updating...' : 'Save Changes 🎯'}
+            {saving ? '💭 Updating...' : (isOnboardingMode ? 'Finish ✨' : 'Save Changes 🎯')}
           </Text>
+        </TouchableOpacity>
+
+        {/* View Tutorial Button */}
+        <TouchableOpacity
+          style={styles.tutorialButton}
+          onPress={async () => {
+            // Clear tutorial completion flag and navigate
+            await AsyncStorage.removeItem('tutorial_completed');
+            router.push('/app-tutorial');
+          }}
+        >
+          <Text style={styles.tutorialButtonText}>📚 View App Tutorial</Text>
         </TouchableOpacity>
 
         {/* Generate Training Plan Button */}
@@ -1175,6 +1308,20 @@ const styles = StyleSheet.create({
   },
   saveButtonDisabled: {
     opacity: 0.5,
+  },
+  tutorialButton: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.primary + '60',
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+  },
+  tutorialButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
   },
   saveButtonText: {
     color: theme.colors.background,

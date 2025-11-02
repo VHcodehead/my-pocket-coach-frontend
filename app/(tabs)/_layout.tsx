@@ -1,7 +1,9 @@
 // Tabs layout - Futuristic design
-import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { Tabs, useRouter } from 'expo-router';
 import { Text, StyleSheet } from 'react-native';
 import { theme } from '../../src/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import SVG icons
 import HomeIcon from '../../assets/icons/home-icon.svg';
@@ -11,6 +13,24 @@ import TrainingIcon from '../../assets/icons/training-icon.svg';
 import MeIcon from '../../assets/icons/me-icon.svg';
 
 export default function TabsLayout() {
+  const router = useRouter();
+
+  useEffect(() => {
+    checkTutorialStatus();
+  }, []);
+
+  const checkTutorialStatus = async () => {
+    try {
+      const tutorialCompleted = await AsyncStorage.getItem('tutorial_completed');
+
+      // If tutorial not completed, redirect to tutorial
+      if (!tutorialCompleted) {
+        router.replace('/app-tutorial');
+      }
+    } catch (error) {
+      console.error('[TABS] Error checking tutorial status:', error);
+    }
+  };
   return (
     <Tabs
       screenOptions={{

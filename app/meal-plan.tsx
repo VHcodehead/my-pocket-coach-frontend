@@ -1,7 +1,7 @@
 // Meal Plan - View your personalized weekly meal plan
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { theme } from '../src/theme';
 import { mealPlanAPI, authAPI } from '../src/services/api';
@@ -206,7 +206,13 @@ export default function MealPlanScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Meal Plan', headerShown: true }} />
+        <View style={styles.customHeader}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.customHeaderTitle}>Meal Plan</Text>
+          <View style={{ width: 60 }} />
+        </View>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading your meal plan...</Text>
         </View>
@@ -217,7 +223,13 @@ export default function MealPlanScreen() {
   if (!mealPlan) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Meal Plan', headerShown: true }} />
+        <View style={styles.customHeader}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.customHeaderTitle}>Meal Plan</Text>
+          <View style={{ width: 60 }} />
+        </View>
         <View style={styles.emptyContainer}>
           <ClipboardIcon width={64} height={64} fill={theme.colors.textMuted} />
           <Text style={styles.emptyTitle}>No Meal Plan Yet</Text>
@@ -280,7 +292,13 @@ export default function MealPlanScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Your Meal Plan', headerShown: true }} />
+      <View style={styles.customHeader}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.customHeaderTitle}>Meal Plan</Text>
+        <View style={{ width: 60 }} />
+      </View>
 
       <ScrollView
         style={styles.content}
@@ -446,6 +464,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: 60,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backButton: {
+    padding: theme.spacing.sm,
+  },
+  backButtonText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  customHeaderTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
   },
   content: {
     flex: 1,

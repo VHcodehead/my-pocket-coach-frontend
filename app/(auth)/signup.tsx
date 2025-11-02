@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../src/services/supabase';
 import { authAPI, mealPlanAPI, goalDateAPI } from '../../src/services/api';
 import { theme } from '../../src/theme';
@@ -55,8 +56,8 @@ export default function SignupScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert(ErrorMessages.passwordTooShort.title, ErrorMessages.passwordTooShort.message);
+    if (password.length < 8) {
+      Alert.alert('Password Too Short', 'Password must be at least 8 characters');
       return;
     }
 
@@ -80,8 +81,14 @@ export default function SignupScreen() {
       }
 
       console.log('[SIGNUP] Account created:', response.data?.user?.email);
-      setUserId(response.data?.user?.id || '');
-      setStep(2); // Move to onboarding
+
+      // Clear tutorial flag for new user (ensures tutorial shows even on shared devices)
+      await AsyncStorage.removeItem('tutorial_completed');
+      console.log('[SIGNUP] Cleared tutorial flag for new user');
+
+      // Redirect to settings for full onboarding (same as OAuth flow)
+      // Add query param to indicate this is initial onboarding
+      router.replace('/settings?onboarding=true');
     } catch (error: any) {
       console.error('[SIGNUP] Exception:', error);
       const friendlyError = getUserFriendlyError(error);
@@ -204,12 +211,12 @@ export default function SignupScreen() {
         return;
       }
 
-      console.log('[SIGNUP] Onboarding complete, generating initial meal plan...');
+      console.log('[SIGNUP] Nutrition onboarding complete');
 
-      // Auto-generate initial meal plan
+      // Auto-generate initial meal plan in background
       try {
         const profile = response.data;
-        await mealPlanAPI.generate({
+        mealPlanAPI.generate({
           profile: {
             weight: profile.weight,
             bodyfat: profile.bodyfat,
@@ -230,13 +237,14 @@ export default function SignupScreen() {
             mustInclude: profile.must_include || [],
             avoid: profile.dislikes || [],
           },
-        });
-        console.log('[SIGNUP] Initial meal plan generated');
+        }).then(() => console.log('[SIGNUP] Initial meal plan generated'))
+          .catch((error) => console.error('[SIGNUP] Meal plan generation failed (non-critical):', error));
       } catch (error) {
-        console.error('[SIGNUP] Meal plan generation failed (non-critical):', error);
+        console.error('[SIGNUP] Meal plan generation error:', error);
       }
 
-      router.replace('/(tabs)');
+      // Redirect to training onboarding (step 3)
+      router.replace('/training-onboarding');
     } catch (error: any) {
       console.error('[SIGNUP] Exception:', error);
       const friendlyError = getUserFriendlyError(error);

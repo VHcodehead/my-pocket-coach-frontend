@@ -118,7 +118,7 @@ export function getContextualActions(
       id: 'meal-plan',
       label: 'Meal Plan',
       emoji: '📋',
-      route: '/meal-prep',
+      route: '/meal-plan',
       priority: 80,
       reason: 'Plan ahead',
     });

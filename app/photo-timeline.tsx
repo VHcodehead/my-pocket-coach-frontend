@@ -91,7 +91,23 @@ export default function PhotoTimelineScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Progress Photos', headerShown: true }} />
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: theme.colors.background,
+            },
+            headerTintColor: theme.colors.primary,
+            headerTitle: 'Progress Photos',
+            headerTitleStyle: {
+              fontWeight: theme.fontWeight.bold,
+              fontSize: theme.fontSize.xl,
+              color: theme.colors.text,
+            },
+            headerShadowVisible: false,
+            headerBackTitle: 'Back',
+          }}
+        />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading your progress...</Text>
         </View>
@@ -101,7 +117,23 @@ export default function PhotoTimelineScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Stack.Screen options={{ title: 'Progress Photos', headerShown: true }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: theme.colors.background,
+          },
+          headerTintColor: theme.colors.primary,
+          headerTitle: 'Progress Photos',
+          headerTitleStyle: {
+            fontWeight: theme.fontWeight.bold,
+            fontSize: theme.fontSize.xl,
+            color: theme.colors.text,
+          },
+          headerShadowVisible: false,
+          headerBackTitle: 'Back',
+        }}
+      />
 
       {/* Header */}
       <View style={styles.header}>

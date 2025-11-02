@@ -116,6 +116,14 @@ export default function TrainingOnboardingScreen() {
       return;
     }
 
+    // Auto-generate plan when advancing to final review step
+    if (currentStep === 7) {
+      setCurrentStep(8);
+      // Automatically start plan generation
+      setTimeout(() => handleGeneratePlan(), 500);
+      return;
+    }
+
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
   };
 
@@ -154,14 +162,14 @@ export default function TrainingOnboardingScreen() {
     }
     setGenerating(false);
 
-    // Navigate to training tab where they can see the plan when ready
+    // Navigate to tutorial after training onboarding completes
     Alert.alert(
-      'Plan Generating',
-      'Your training plan is being generated in the background. Check back in 5-10 minutes under the Training tab!',
+      'Training Plan Generating!',
+      'Your personalized program is being created. Let\'s complete the tour while it generates!',
       [
         {
-          text: 'Got it',
-          onPress: () => router.replace('/(tabs)/training'),
+          text: 'Continue',
+          onPress: () => router.replace('/app-tutorial'),
         },
       ]
     );
@@ -191,11 +199,11 @@ export default function TrainingOnboardingScreen() {
 
           Alert.alert(
             'Training Plan Created!',
-            `Your ${experienceLevel} ${primaryGoal} program is ready. ${trainingDays} workouts per week, ${timePerSession} minutes each.`,
+            `Your ${experienceLevel} ${primaryGoal} program is ready! Let's show you around the app.`,
             [
               {
-                text: 'View My Program',
-                onPress: () => router.replace('/(tabs)/training'),
+                text: 'Start Tour',
+                onPress: () => router.replace('/app-tutorial'),
               },
             ]
           );

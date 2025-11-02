@@ -133,6 +133,74 @@ export default function TrainingProgramScreen() {
           )}
         </View>
 
+        {/* Conditioning (Cardio) Prescription */}
+        {plan.program_structure?.conditioning && (
+          <View style={styles.conditioningCard}>
+            <Text style={styles.conditioningTitle}>🏃 Daily Conditioning (LISS)</Text>
+
+            {plan.program_structure.conditioning.hasWearable && (
+              <View style={styles.conditioningWearableBadge}>
+                <Text style={styles.conditioningWearableText}>
+                  📊 {plan.program_structure.conditioning.wearableSource === 'oura' ? 'Oura Ring' : 'Apple Watch'} Connected
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.conditioningStats}>
+              {plan.program_structure.conditioning.currentAvgSteps !== null && (
+                <View style={styles.conditioningStat}>
+                  <Text style={styles.conditioningStatLabel}>Current Avg:</Text>
+                  <Text style={styles.conditioningStatValue}>
+                    {plan.program_structure.conditioning.currentAvgSteps.toLocaleString()} steps/day
+                  </Text>
+                </View>
+              )}
+              <View style={styles.conditioningStat}>
+                <Text style={styles.conditioningStatLabel}>Target:</Text>
+                <Text style={styles.conditioningStatValue}>
+                  {plan.program_structure.conditioning.targetSteps.toLocaleString()} steps/day
+                </Text>
+              </View>
+              {plan.program_structure.conditioning.stepDeficit !== null && plan.program_structure.conditioning.stepDeficit > 0 && (
+                <View style={styles.conditioningStat}>
+                  <Text style={styles.conditioningStatLabel}>Gap:</Text>
+                  <Text style={[styles.conditioningStatValue, styles.conditioningGap]}>
+                    +{plan.program_structure.conditioning.stepDeficit.toLocaleString()} steps needed
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.conditioningPrescription}>
+              <Text style={styles.conditioningPrescriptionTitle}>Recommended Activity:</Text>
+              <Text style={styles.conditioningPrescriptionValue}>
+                {plan.program_structure.conditioning.prescribedActivity}
+              </Text>
+            </View>
+
+            <View style={styles.conditioningDetails}>
+              <View style={styles.conditioningDetailRow}>
+                <Text style={styles.conditioningDetailLabel}>Frequency:</Text>
+                <Text style={styles.conditioningDetailValue}>
+                  {plan.program_structure.conditioning.frequency}
+                </Text>
+              </View>
+              <View style={styles.conditioningDetailRow}>
+                <Text style={styles.conditioningDetailLabel}>Best Time:</Text>
+                <Text style={styles.conditioningDetailValue}>
+                  {plan.program_structure.conditioning.timing}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.conditioningRationale}>
+              <Text style={styles.conditioningRationaleText}>
+                💡 {plan.program_structure.conditioning.rationale}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Week Selector */}
         <View style={styles.weekSelectorContainer}>
           <Text style={styles.sectionTitle}>Select Week</Text>
@@ -627,5 +695,106 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.xs,
     color: theme.colors.textMuted,
     marginTop: theme.spacing.xs,
+  },
+  // Conditioning Styles
+  conditioningCard: {
+    margin: theme.spacing.lg,
+    marginTop: 0,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981', // Green accent for conditioning
+    ...theme.shadows.sm,
+  },
+  conditioningTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  conditioningWearableBadge: {
+    backgroundColor: theme.colors.primary + '15',
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    alignSelf: 'flex-start',
+    marginBottom: theme.spacing.md,
+  },
+  conditioningWearableText: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  conditioningStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  conditioningStat: {
+    flex: 1,
+    minWidth: '45%',
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+  },
+  conditioningStatLabel: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textSecondary,
+    marginBottom: 2,
+  },
+  conditioningStatValue: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text,
+  },
+  conditioningGap: {
+    color: '#F59E0B', // Orange for gap/deficit
+  },
+  conditioningPrescription: {
+    padding: theme.spacing.md,
+    backgroundColor: '#10B981' + '10',
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+  },
+  conditioningPrescriptionTitle: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
+  conditioningPrescriptionValue: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: '#10B981',
+  },
+  conditioningDetails: {
+    marginBottom: theme.spacing.md,
+  },
+  conditioningDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.xs,
+  },
+  conditioningDetailLabel: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+  },
+  conditioningDetailValue: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeight.medium,
+  },
+  conditioningRationale: {
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    borderLeftWidth: 2,
+    borderLeftColor: theme.colors.primary,
+  },
+  conditioningRationaleText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
   },
 });

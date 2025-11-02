@@ -1,7 +1,7 @@
 // Weekly check-in screen with multi-step wizard
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Keyboard } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { theme } from '../src/theme';
 import { checkinAPI, mealPlanAPI, authAPI, trainingAPI } from '../src/services/api';
 import * as ImagePicker from 'expo-image-picker';
@@ -892,6 +892,8 @@ export default function WeeklyCheckinScreen() {
 
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -970,6 +972,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.xl,
     paddingTop: 60,
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
@@ -983,7 +986,8 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 20,
-    color: theme.colors.text,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.bold,
   },
   headerTitleContainer: {
     flex: 1,

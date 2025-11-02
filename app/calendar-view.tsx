@@ -35,7 +35,7 @@ export default function CalendarViewScreen() {
   const [loading, setLoading] = useState(true);
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [trainingPlan, setTrainingPlan] = useState<any>(null);
+  const [currentWeekWorkouts, setCurrentWeekWorkouts] = useState<any[]>([]);
 
 
   useEffect(() => {
@@ -46,10 +46,13 @@ export default function CalendarViewScreen() {
     try {
       setLoading(true);
       const trainingResponse = await trainingAPI.getCurrentPlan();
+      let workouts: any[] = [];
       if (trainingResponse.success && trainingResponse.data) {
-        setTrainingPlan(trainingResponse.data);
+        // Extract currentWeekWorkouts from the response
+        workouts = trainingResponse.data.currentWeekWorkouts || [];
+        setCurrentWeekWorkouts(workouts);
       }
-      await generateWeek();
+      await generateWeek(workouts);
     } catch (error) {
       console.error('[CALENDAR] Error loading data:', error);
     } finally {
@@ -57,7 +60,7 @@ export default function CalendarViewScreen() {
     }
   };
 
-  const generateWeek = async () => {
+  const generateWeek = async (workouts: any[] = currentWeekWorkouts) => {
     const today = new Date();
     const currentDayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
 
@@ -88,11 +91,10 @@ export default function CalendarViewScreen() {
       const dateString = date.toISOString().split('T')[0];
       const log = weekLogs.find(l => l.date === dateString);
 
-      // Get workout for this day
-      let workoutName = '';
-      if (trainingPlan?.program_structure?.weeklySchedule) {
-        workoutName = trainingPlan.program_structure.weeklySchedule[i] || '';
-      }
+      // Get workout for this day from currentWeekWorkouts
+      // day_number: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const workout = workouts.find(w => w.day_number === i);
+      const workoutName = workout?.workout_name || '';
 
       const isToday =
         date.getDate() === today.getDate() &&

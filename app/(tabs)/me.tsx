@@ -203,7 +203,7 @@ export default function MeScreen() {
 
         <TouchableOpacity
           style={styles.progressCard}
-          onPress={() => Alert.alert('Coming Soon!', 'Goals & milestones tracking is on the way!')}
+          onPress={() => router.push('/goals-milestones')}
         >
           <View style={styles.progressIcon}>
             <GoalsIcon width={32} height={32} fill={theme.colors.primary} />
@@ -217,14 +217,14 @@ export default function MeScreen() {
 
         <TouchableOpacity
           style={styles.progressCard}
-          onPress={() => Alert.alert('Coming Soon! 💧', 'Wellness tracking for water, mood, and sleep is coming!')}
+          onPress={() => router.push('/wellness-tracking')}
         >
           <View style={styles.progressIcon}>
             <WaterDropletIcon width={32} height={32} fill={theme.colors.primary} />
           </View>
           <View style={styles.progressContent}>
             <Text style={styles.progressTitle}>Wellness Tracking</Text>
-            <Text style={styles.progressSubtitle}>Water intake, mood, and sleep quality</Text>
+            <Text style={styles.progressSubtitle}>Daily mood, energy, stress, and sleep quality</Text>
           </View>
           <Text style={styles.progressArrow}>›</Text>
         </TouchableOpacity>

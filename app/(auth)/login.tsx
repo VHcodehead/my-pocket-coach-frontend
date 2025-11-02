@@ -81,7 +81,7 @@ export default function LoginScreen() {
       if (result.data?.needsConsent) {
         setShowConsentFlow(true);
       } else {
-        router.replace('/(tabs)');
+        await checkOnboardingAndNavigate();
       }
     } catch (error: any) {
       console.error('[LOGIN] Google OAuth exception:', error);
@@ -109,7 +109,7 @@ export default function LoginScreen() {
       if (result.data?.needsConsent) {
         setShowConsentFlow(true);
       } else {
-        router.replace('/(tabs)');
+        await checkOnboardingAndNavigate();
       }
     } catch (error: any) {
       console.error('[LOGIN] Apple OAuth exception:', error);
@@ -119,10 +119,49 @@ export default function LoginScreen() {
     }
   };
 
-  const handleConsentComplete = () => {
-    console.log('[LOGIN] Consent flow completed, navigating to app');
+  const handleConsentComplete = async () => {
+    console.log('[LOGIN] Consent flow completed, checking onboarding status');
     setShowConsentFlow(false);
-    router.replace('/(tabs)');
+    await checkOnboardingAndNavigate();
+  };
+
+  const checkOnboardingAndNavigate = async () => {
+    try {
+      console.log('[LOGIN] Checking if user has completed onboarding');
+
+      // Check if user has a training plan (indicates onboarding complete)
+      const trainingResponse = await authAPI.getProfile();
+
+      if (!trainingResponse.success) {
+        console.error('[LOGIN] Failed to fetch profile:', trainingResponse.error);
+        router.replace('/settings');
+        return;
+      }
+
+      // Check multiple indicators of completed onboarding
+      const profile = trainingResponse.data;
+      const hasGoalWeight = profile?.goal_weight != null;
+      const hasTargetMacros = profile?.target_protein != null;
+
+      // Also check for training plan
+      const trainingAPI = require('../../src/services/api').trainingAPI;
+      const planResponse = await trainingAPI.getCurrentPlan();
+      const hasTrainingPlan = planResponse.success && planResponse.data?.plan != null;
+
+      console.log('[LOGIN] Onboarding status:', { hasGoalWeight, hasTargetMacros, hasTrainingPlan });
+
+      if (hasGoalWeight && hasTargetMacros && hasTrainingPlan) {
+        console.log('[LOGIN] Onboarding complete, navigating to app');
+        router.replace('/(tabs)');
+      } else {
+        console.log('[LOGIN] Onboarding incomplete, navigating to settings');
+        router.replace('/settings');
+      }
+    } catch (error) {
+      console.error('[LOGIN] Error checking onboarding:', error);
+      // Default to settings if check fails
+      router.replace('/settings');
+    }
   };
 
   const handleConsentCancel = async () => {
