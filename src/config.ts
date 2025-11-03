@@ -3,15 +3,16 @@ import Constants from 'expo-constants';
 
 const ENV = {
   dev: {
-    // TEMPORARILY USING RAILWAY FOR TESTING
-    API_URL: 'https://my-pocket-coach-backend-production.up.railway.app',
-    SUPABASE_URL: 'https://tomoqkmbozuxpdqfrsrf.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbW9xa21ib3p1eHBkcWZyc3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NzQyNTQsImV4cCI6MjA3NTM1MDI1NH0.wE71MS8tkTcL7YqgD2RDo0MgTdMK8NTfLNLvHFsvo18',
+    // Development uses local .env file or defaults
+    API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://my-pocket-coach-backend-production.up.railway.app',
+    SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://tomoqkmbozuxpdqfrsrf.supabase.co',
+    SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
   },
   prod: {
-    API_URL: 'https://my-pocket-coach-backend-production.up.railway.app',
-    SUPABASE_URL: 'https://tomoqkmbozuxpdqfrsrf.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbW9xa21ib3p1eHBkcWZyc3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NzQyNTQsImV4cCI6MjA3NTM1MDI1NH0.wE71MS8tkTcL7YqgD2RDo0MgTdMK8NTfLNLvHFsvo18',
+    // Production reads from environment variables set in eas.json
+    API_URL: process.env.EXPO_PUBLIC_API_URL || 'https://my-pocket-coach-backend-production.up.railway.app',
+    SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://tomoqkmbozuxpdqfrsrf.supabase.co',
+    SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
   },
 };
 

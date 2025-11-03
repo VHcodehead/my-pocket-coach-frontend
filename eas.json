@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 5.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://my-pocket-coach-backend-production.up.railway.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://tomoqkmbozuxpdqfrsrf.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbW9xa21ib3p1eHBkcWZyc3JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NzQyNTQsImV4cCI6MjA3NTM1MDI1NH0.wE71MS8tkTcL7YqgD2RDo0MgTdMK8NTfLNLvHFsvo18",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://925fb9fb6d5725c089d0f4d73767f758@o4510297802342400.ingest.us.sentry.io/4510297823051776"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "your-apple-team-id"
+      }
+    }
+  }
+}
