@@ -10,7 +10,6 @@
     "newArchEnabled": false,
     "jsEngine": "jsc",
     "privacy": "public",
-    "privacyPolicyUrl": "https://integrativeaisolutions.com/privacy-policy.html",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

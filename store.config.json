@@ -1,0 +1,12 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "info": {
+      "en-US": {
+        "title": "My Pocket Coach",
+        "subtitle": "Your AI Fitness & Nutrition Coach",
+        "privacyPolicyUrl": "https://integrativeaisolutions.com/privacy-policy.html"
+      }
+    }
+  }
+}
