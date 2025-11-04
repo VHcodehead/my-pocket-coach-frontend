@@ -8,6 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "jsEngine": "jsc",
     "privacy": "public",
     "privacyPolicyUrl": "https://integrativeaisolutions.com/privacy-policy.html",
     "splash": {
@@ -28,8 +29,10 @@
         "NSHealthShareUsageDescription": "Pocket Coach analyzes your sleep, recovery, and activity data from Apple Watch to optimize your training and nutrition plans.",
         "NSHealthUpdateUsageDescription": "Pocket Coach can save your workout data to Apple Health.",
         "UIRequiredDeviceCapabilities": [
+          "healthkit",
           "healthkit"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
@@ -47,6 +50,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bcbbea0d-d272-49a1-96d5-c47bd5cb2c54"
+      }
     }
   }
 }
