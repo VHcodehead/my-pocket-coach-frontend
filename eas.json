@@ -19,6 +19,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "ios": {
+        "jsEngine": "jsc"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://my-pocket-coach-backend-production.up.railway.app",
         "EXPO_PUBLIC_SUPABASE_URL": "https://tomoqkmbozuxpdqfrsrf.supabase.co",
