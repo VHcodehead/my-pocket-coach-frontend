@@ -17,6 +17,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "jsEngine": "jsc",
       "supportsTablet": true,
       "bundleIdentifier": "com.mypocketcoach.app",
       "buildNumber": "1",
