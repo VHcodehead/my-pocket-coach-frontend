@@ -6,9 +6,9 @@ import { theme } from '../src/theme';
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 
-// Initialize Sentry
-import { initSentry, Sentry } from '../src/utils/sentry';
-initSentry();
+// Initialize Sentry - TEMPORARILY DISABLED FOR TESTING
+// import { initSentry, Sentry } from '../src/utils/sentry';
+// initSentry();
 
 function AppContent() {
   const { isDark } = useTheme();
@@ -42,5 +42,6 @@ function RootLayout() {
   );
 }
 
-// Wrap with Sentry for error tracking
-export default Sentry.wrap(RootLayout);
+// Wrap with Sentry for error tracking - TEMPORARILY DISABLED FOR TESTING
+// export default Sentry.wrap(RootLayout);
+export default RootLayout;
