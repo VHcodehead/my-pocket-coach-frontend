@@ -644,13 +644,16 @@ export default function TrainingOnboardingScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.backButton}>
           <Text style={styles.backButtonText}>✕</Text>
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Training Setup</Text>
           <Text style={styles.headerSubtitle}>Step {currentStep} of {totalSteps}</Text>
         </View>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.skipButton}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Progress Bar */}
@@ -743,6 +746,17 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.textSecondary,
+  },
+  skipButton: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surface,
+  },
+  skipText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.primary,
   },
   progressBar: {
     height: 4,

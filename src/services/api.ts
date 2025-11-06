@@ -70,8 +70,21 @@ const apiFetch = async (
       cache: 'no-store', // Force no caching
     });
 
-    const data = await response.json();
-    console.log(`[API] Response data:`, JSON.stringify(data, null, 2));
+    // Get response as text first to handle non-JSON responses
+    const responseText = await response.text();
+    console.log(`[API] Response status: ${response.status}, Content-Type: ${response.headers.get('content-type')}`);
+    console.log(`[API] Raw response:`, responseText.substring(0, 500)); // Log first 500 chars
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log(`[API] Parsed JSON:`, JSON.stringify(data, null, 2));
+    } catch (parseError) {
+      // Response is not JSON - likely HTML error page or plain text
+      console.error(`[API] JSON parse failed. Response was:`, responseText);
+      throw new Error(`Backend returned non-JSON response (status ${response.status}): ${responseText.substring(0, 200)}`);
+    }
 
     if (!response.ok) {
       console.error(`[API] Error ${response.status}:`, data);
@@ -411,8 +424,10 @@ export const trainingAPI = {
 
   // Workouts
   getTodayWorkout: async (): Promise<APIResponse> => {
-    console.log('[API] Fetching today\'s workout');
-    return apiFetch('/training/workout/today');
+    // Get user's timezone offset in minutes (negative for west of UTC)
+    const timezoneOffset = -new Date().getTimezoneOffset();
+    console.log('[API] Fetching today\'s workout with timezone offset:', timezoneOffset);
+    return apiFetch(`/training/workout/today?timezoneOffset=${timezoneOffset}`);
   },
 
   getWorkoutTemplate: async (templateId: number): Promise<APIResponse> => {

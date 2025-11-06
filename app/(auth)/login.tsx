@@ -210,14 +210,14 @@ export default function LoginScreen() {
         By continuing, you agree to our{' '}
         <Text
           style={styles.oauthTermsLink}
-          onPress={() => Linking.openURL('https://integrativeaisolutions.com/terms-of-service.html')}
+          onPress={() => Linking.openURL('https://www.integrativeaisolutions.com/terms-of-service.html')}
         >
           Terms of Service
         </Text>
         {' '}and{' '}
         <Text
           style={styles.oauthTermsLink}
-          onPress={() => Linking.openURL('https://integrativeaisolutions.com/privacy-policy.html')}
+          onPress={() => Linking.openURL('https://www.integrativeaisolutions.com/privacy-policy.html')}
         >
           Privacy Policy
         </Text>

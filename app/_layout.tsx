@@ -5,10 +5,31 @@ import Toast from 'react-native-toast-message';
 import { theme } from '../src/theme';
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
+import { Alert } from 'react-native';
 
-// Initialize Sentry - TEMPORARILY DISABLED FOR TESTING
-// import { initSentry, Sentry } from '../src/utils/sentry';
-// initSentry();
+// CRITICAL: Catch all errors BEFORE they crash
+(global as any).ErrorUtils?.setGlobalHandler?.((error: Error, isFatal: boolean) => {
+  console.error('🔴 GLOBAL ERROR CAUGHT:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+    isFatal,
+  });
+
+  // Show alert so we can see it before crash
+  Alert.alert(
+    'Error Caught!',
+    `${error.name}: ${error.message}\n\nCheck console for stack trace`,
+    [{ text: 'OK' }]
+  );
+
+  // Re-throw to let Sentry catch it too
+  throw error;
+});
+
+// Initialize Sentry
+import { initSentry, Sentry } from '../src/utils/sentry';
+initSentry();
 
 function AppContent() {
   const { isDark } = useTheme();
@@ -42,6 +63,5 @@ function RootLayout() {
   );
 }
 
-// Wrap with Sentry for error tracking - TEMPORARILY DISABLED FOR TESTING
-// export default Sentry.wrap(RootLayout);
-export default RootLayout;
+// Wrap with Sentry for error tracking
+export default Sentry.wrap(RootLayout);

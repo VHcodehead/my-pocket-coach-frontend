@@ -21,8 +21,8 @@ interface LegalConsentModalProps {
 }
 
 const DOCUMENT_URLS = {
-  terms: 'https://integrativeaisolutions.com/terms-of-service.html',
-  privacy: 'https://integrativeaisolutions.com/privacy-policy.html',
+  terms: 'https://www.integrativeaisolutions.com/terms-of-service.html',
+  privacy: 'https://www.integrativeaisolutions.com/privacy-policy.html',
 };
 
 const DOCUMENT_TITLES = {

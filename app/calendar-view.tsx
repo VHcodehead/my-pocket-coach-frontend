@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { foodLogAPI, trainingAPI } from '../src/services/api';
 import { theme } from '../src/theme';
 import { DailyFoodLog } from '../src/types';
+import { captureError } from '../src/utils/sentry';
 
 // Import SVG icons
 import TrainingIcon from '../assets/icons/training-icon.svg';
@@ -51,10 +52,24 @@ export default function CalendarViewScreen() {
         // Extract currentWeekWorkouts from the response
         workouts = trainingResponse.data.currentWeekWorkouts || [];
         setCurrentWeekWorkouts(workouts);
+      } else {
+        // Show DETAILED error to user AND send to Sentry
+        const errorMsg = `Failed to load training plan: ${trainingResponse.error || 'Unknown error'}\n\nFull response: ${JSON.stringify(trainingResponse, null, 2)}`;
+        Alert.alert('Calendar Error', errorMsg);
+        console.error('[CALENDAR] Training plan failed:', trainingResponse);
+        captureError(new Error(errorMsg), { feature: 'calendar', action: 'load_training', extra: trainingResponse });
       }
       await generateWeek(workouts);
     } catch (error) {
+      // Show DETAILED error to user AND send to Sentry
+      const errorDetails = error instanceof Error
+        ? `${error.message}\n\nStack: ${error.stack?.substring(0, 500)}`
+        : String(error);
+      Alert.alert('Calendar Error', `Error loading data: ${errorDetails}`);
       console.error('[CALENDAR] Error loading data:', error);
+      if (error instanceof Error) {
+        captureError(error, { feature: 'calendar', action: 'load_data', extra: { fullError: error } });
+      }
     } finally {
       setLoading(false);
     }
@@ -75,9 +90,21 @@ export default function CalendarViewScreen() {
       const response = await foodLogAPI.getWeek();
       if (response.success && response.data) {
         weekLogs = response.data;
+      } else {
+        const errorMsg = `Failed to load food logs: ${response.error || 'Unknown error'}\n\nResponse: ${JSON.stringify(response, null, 2)}`;
+        Alert.alert('Calendar Error', errorMsg);
+        console.error('[CALENDAR] Food logs failed:', response);
+        captureError(new Error(errorMsg), { feature: 'calendar', action: 'load_food_logs', extra: response });
       }
     } catch (error) {
+      const errorDetails = error instanceof Error
+        ? `${error.message}\n\n${error.stack?.substring(0, 300)}`
+        : String(error);
+      Alert.alert('Calendar Error', `Error fetching logs: ${errorDetails}`);
       console.error('[CALENDAR] Error fetching logs:', error);
+      if (error instanceof Error) {
+        captureError(error, { feature: 'calendar', action: 'load_food_logs', extra: { fullError: error } });
+      }
     }
 
     // Generate 7 days (Sun - Sat)

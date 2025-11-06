@@ -619,14 +619,14 @@ export default function SignupScreen() {
             I agree to the{' '}
             <Text
               style={styles.privacyLink}
-              onPress={() => Linking.openURL('https://integrativeaisolutions.com/terms-of-service.html')}
+              onPress={() => Linking.openURL('https://www.integrativeaisolutions.com/terms-of-service.html')}
             >
               Terms of Service
             </Text>
             {' '}and{' '}
             <Text
               style={styles.privacyLink}
-              onPress={() => Linking.openURL('https://integrativeaisolutions.com/privacy-policy.html')}
+              onPress={() => Linking.openURL('https://www.integrativeaisolutions.com/privacy-policy.html')}
             >
               Privacy Policy
             </Text>

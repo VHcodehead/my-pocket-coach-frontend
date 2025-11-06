@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { trainingAPI } from '../../src/services/api';
 import { theme } from '../../src/theme';
 import { TrainingPlan } from '../../src/types';
+import { captureError } from '../../src/utils/sentry';
 
 // Import SVG icons
 import BicepIcon from '../../assets/icons/bicep-icon.svg';
@@ -91,9 +92,23 @@ export default function TrainingScreen() {
       const response = await trainingAPI.getCurrentPlan();
       if (response.success && response.data) {
         setTrainingPlan(response.data);
+      } else {
+        // Show DETAILED error to user AND send to Sentry
+        const errorMsg = `Failed to load plan: ${response.error || 'Unknown error'}\n\nFull response: ${JSON.stringify(response, null, 2)}`;
+        Alert.alert('Training Plan Error', errorMsg);
+        console.error('[TRAINING] Fetch plan failed:', response);
+        captureError(new Error(errorMsg), { feature: 'training', action: 'fetch_plan', extra: response });
       }
     } catch (error) {
+      // Show DETAILED error to user AND send to Sentry
+      const errorDetails = error instanceof Error
+        ? `${error.message}\n\nStack: ${error.stack}\n\nDetails: ${JSON.stringify((error as any).details || {}, null, 2)}`
+        : String(error);
+      Alert.alert('Training Plan Error', `Error: ${errorDetails}`);
       console.error('[TRAINING] Fetch plan error:', error);
+      if (error instanceof Error) {
+        captureError(error, { feature: 'training', action: 'fetch_plan', extra: { fullError: error, stack: error.stack } });
+      }
     }
   };
 
