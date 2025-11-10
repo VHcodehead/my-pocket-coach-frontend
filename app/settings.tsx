@@ -419,7 +419,13 @@ export default function SettingsScreen() {
           }
         }
 
-        Alert.alert(SuccessMessages.profileUpdated.title, SuccessMessages.profileUpdated.message, [
+        // Custom message for onboarding vs regular update
+        const alertTitle = wasOnboarding ? 'Account Setup Complete! 🎉' : SuccessMessages.profileUpdated.title;
+        const alertMessage = wasOnboarding
+          ? "Thank you for filling out those questions! With this data I'll start creating your meal and training plan. This can take up to 15 minutes for both, so bear with me. When generated, you can find your full meal plan under the Nutrition tab and your full training plan under the Training tab."
+          : SuccessMessages.profileUpdated.message;
+
+        Alert.alert(alertTitle, alertMessage, [
           {
             text: 'Perfect!',
             onPress: async () => {
@@ -484,7 +490,7 @@ export default function SettingsScreen() {
         <TouchableOpacity onPress={handleBackPress}>
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{isOnboardingMode ? 'Complete Your Profile' : 'Your Profile'}</Text>
+        <Text style={styles.title}>{isOnboardingMode ? 'Account Setup' : 'Your Profile'}</Text>
         <Text style={styles.subtitle}>
           {isOnboardingMode
             ? 'Let me get to know you better so I can create your personalized plan ✨'
@@ -1019,20 +1025,22 @@ export default function SettingsScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* View Tutorial Button */}
-        <TouchableOpacity
-          style={styles.tutorialButton}
-          onPress={async () => {
-            // Clear tutorial completion flag and navigate
-            await AsyncStorage.removeItem('tutorial_completed');
-            router.push('/app-tutorial');
-          }}
-        >
-          <Text style={styles.tutorialButtonText}>📚 View App Tutorial</Text>
-        </TouchableOpacity>
+        {/* View Tutorial Button - Only show during onboarding */}
+        {isOnboardingMode && (
+          <TouchableOpacity
+            style={styles.tutorialButton}
+            onPress={async () => {
+              // Clear tutorial completion flag and navigate
+              await AsyncStorage.removeItem('tutorial_completed');
+              router.push('/app-tutorial');
+            }}
+          >
+            <Text style={styles.tutorialButtonText}>📚 View App Tutorial</Text>
+          </TouchableOpacity>
+        )}
 
-        {/* Generate Training Plan Button */}
-        {workoutLocation && experienceLevel && primaryGoal && equipment.length > 0 && (
+        {/* Generate Training Plan Button - Only show during onboarding */}
+        {isOnboardingMode && workoutLocation && experienceLevel && primaryGoal && equipment.length > 0 && (
           <TouchableOpacity
             style={styles.trainingPlanButton}
             onPress={async () => {
@@ -1075,8 +1083,8 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Helper text for incomplete training preferences */}
-        {(!workoutLocation || !experienceLevel || !primaryGoal || equipment.length === 0) && (
+        {/* Helper text for incomplete training preferences - Only show during onboarding */}
+        {isOnboardingMode && (!workoutLocation || !experienceLevel || !primaryGoal || equipment.length === 0) && (
           <Text style={styles.helperText}>
             💡 Fill out all training preferences above to generate your custom program
           </Text>

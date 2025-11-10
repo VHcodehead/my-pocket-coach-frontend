@@ -4,12 +4,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../src/services/supabase';
-import { foodLogAPI, trainingAPI, quoteAPI, authAPI } from '../../src/services/api';
+import { foodLogAPI, trainingAPI, quoteAPI, authAPI, mealPlanAPI } from '../../src/services/api';
 import { getOuraStatus, autoSyncOuraData, OuraStatus } from '../../src/services/ouraAPI';
 import { getAppleWatchStatus, autoSyncHealthKitData, AppleWatchStatus } from '../../src/services/healthKitAPI';
 import { theme } from '../../src/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DailyFoodLog, UserProfile } from '../../src/types';
+import { DailyFoodLog, UserProfile, MealPlan, Meal } from '../../src/types';
 import { useUser } from '../../src/contexts/UserContext';
 import { getGreeting } from '../../src/utils/coachFeedback';
 import { generate7DayCalendar, calculateCurrentStreak, CalendarDay } from '../../src/utils/streakCalendar';
@@ -50,6 +50,9 @@ export default function HomeScreen() {
   const [deloadEndDate, setDeloadEndDate] = useState<Date | null>(null);
   const [ouraStatus, setOuraStatus] = useState<OuraStatus | null>(null);
   const [appleWatchStatus, setAppleWatchStatus] = useState<AppleWatchStatus | null>(null);
+  const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
+  const [todayMeals, setTodayMeals] = useState<Meal[]>([]);
+  const [loggingMeal, setLoggingMeal] = useState<string | null>(null); // meal_type being logged
 
   // Map action IDs to SVG icons
   const getActionIcon = (actionId: string) => {
@@ -134,7 +137,7 @@ export default function HomeScreen() {
         }
       }).catch(err => console.error('[HOME] Apple Watch auto-sync failed:', err));
 
-      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus(), fetchAppleWatchStatus()]);
+      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchMealPlan(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus(), fetchAppleWatchStatus()]);
       console.log('[HOME] Promise.all completed');
     } catch (error) {
       console.error('[HOME] Error loading data:', error);
@@ -153,6 +156,52 @@ export default function HomeScreen() {
     console.log('');
     console.log('✅✅✅ [HOME] REFRESH COMPLETED ✅✅✅');
     console.log('');
+  };
+
+  const handleQuickLogMeal = async (meal: Meal) => {
+    try {
+      setLoggingMeal(meal.meal_type);
+      console.log('[HOME] Quick logging meal:', meal.title, 'with', meal.foods.length, 'items');
+
+      // Create timestamp at noon to avoid timezone issues
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      const logTimestamp = today.toISOString();
+
+      // Log each food item
+      const promises = meal.foods.map(async (foodItem) => {
+        return await foodLogAPI.createEntry({
+          food_name: foodItem.name,
+          serving_size: foodItem.amount,
+          serving_unit: foodItem.unit || 'serving',
+          calories: foodItem.calories,
+          protein: foodItem.protein,
+          carbs: foodItem.carbs,
+          fat: foodItem.fat,
+          meal_type: meal.meal_type,
+          logged_at: logTimestamp,
+        });
+      });
+
+      await Promise.all(promises);
+
+      // Show success and refresh
+      console.log('[HOME] Successfully logged all items from:', meal.title);
+      await fetchTodayLog(); // Refresh today's log to show new entries
+
+      // Show success toast
+      const { showToast } = await import('../../src/utils/toast');
+      showToast.success(
+        'Meal Logged! 🎯',
+        `${meal.title} has been added to your ${meal.meal_type}`
+      );
+    } catch (error) {
+      console.error('[HOME] Quick log error:', error);
+      const { showToast } = await import('../../src/utils/toast');
+      showToast.error('Logging Failed', 'Could not log meal. Please try again.');
+    } finally {
+      setLoggingMeal(null);
+    }
   };
 
   const fetchProfile = async () => {
@@ -232,6 +281,39 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('[HOME] Fetch week logs error:', error);
       setWeekLogs([]);
+    }
+  };
+
+  const fetchMealPlan = async () => {
+    try {
+      console.log('[HOME] Fetching meal plan...');
+      const response = await mealPlanAPI.getCurrent();
+      if (response.success && response.data) {
+        setMealPlan(response.data);
+
+        // Get today's day name
+        const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const today = daysOfWeek[new Date().getDay()];
+
+        // Find today's meals
+        const todayData = response.data.plan_data?.days?.find((day: any) =>
+          day.day.toLowerCase() === today
+        );
+
+        if (todayData?.meals) {
+          setTodayMeals(todayData.meals);
+          console.log('[HOME] Today\'s meals:', todayData.meals);
+        } else {
+          setTodayMeals([]);
+        }
+      } else {
+        setMealPlan(null);
+        setTodayMeals([]);
+      }
+    } catch (error) {
+      console.error('[HOME] Fetch meal plan error:', error);
+      setMealPlan(null);
+      setTodayMeals([]);
     }
   };
 
@@ -350,7 +432,7 @@ export default function HomeScreen() {
         )}
 
         {/* Sunday Check-In Banner */}
-        {!isFirstTimeUser && new Date().getDay() === 0 && (
+        {new Date().getDay() === 0 && profile && (
           <TouchableOpacity
             style={styles.sundayBanner}
             onPress={() => router.push('/weekly-checkin')}
@@ -365,13 +447,7 @@ export default function HomeScreen() {
         )}
 
         {/* Deload Week Banner */}
-        {console.log('[HOME] Banner render check:', {
-          isFirstTimeUser,
-          isDeloadActive,
-          hasDeloadEndDate: !!deloadEndDate,
-          shouldShow: !isFirstTimeUser && isDeloadActive && deloadEndDate
-        })}
-        {!isFirstTimeUser && isDeloadActive && deloadEndDate && (
+        {isDeloadActive && deloadEndDate && (
           <View style={styles.deloadBanner}>
             <BicepIcon width={40} height={40} fill={theme.colors.primary} />
             <View style={styles.deloadBannerText}>
@@ -384,25 +460,19 @@ export default function HomeScreen() {
         )}
 
 
-        {/* First-Time User Onboarding */}
+        {/* First-Time User Tip - Small helpful card */}
         {isFirstTimeUser && (
           <View style={styles.onboardingCard}>
             <Text style={styles.onboardingEmoji}>🌟</Text>
-            <Text style={styles.onboardingTitle}>Let's Get Started!</Text>
+            <Text style={styles.onboardingTitle}>Welcome to My Pocket Coach!</Text>
             <Text style={styles.onboardingText}>
-              Log your meals, and I'll provide personalized guidance to help you reach your goals.
+              Start logging your meals below to track your progress. I'll provide personalized guidance along the way!
             </Text>
-            <TouchableOpacity
-              style={styles.onboardingButton}
-              onPress={() => router.push('/(tabs)/nutrition')}
-            >
-              <Text style={styles.onboardingButtonText}>Log Your First Meal! 🚀</Text>
-            </TouchableOpacity>
           </View>
         )}
 
-        {/* Today's Progress */}
-        {!isFirstTimeUser && todayLog && (
+        {/* Today's Progress - Always show, even with 0 values */}
+        {profile && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Today's Progress</Text>
             <View style={styles.macroGrid}>
@@ -418,7 +488,7 @@ export default function HomeScreen() {
                   <View style={[styles.progressFill, { width: `${caloriesPercent}%`, backgroundColor: theme.colors.calories }]} />
                 </View>
                 <Text style={styles.macroValues}>
-                  {Math.round(todayLog.totals.calories)} / {Math.round(todayLog.targets.calories)}
+                  {todayLog ? Math.round(todayLog.totals.calories) : 0} / {todayLog ? Math.round(todayLog.targets.calories) : Math.round(profile.calories_target || 2000)}
                 </Text>
               </View>
 
@@ -434,7 +504,7 @@ export default function HomeScreen() {
                   <View style={[styles.progressFill, { width: `${proteinPercent}%`, backgroundColor: theme.colors.protein }]} />
                 </View>
                 <Text style={styles.macroValues}>
-                  {Math.round(todayLog.totals.protein)}g / {Math.round(todayLog.targets.protein)}g
+                  {todayLog ? Math.round(todayLog.totals.protein) : 0}g / {todayLog ? Math.round(todayLog.targets.protein) : Math.round(profile.protein_target || 150)}g
                 </Text>
               </View>
 
@@ -450,7 +520,7 @@ export default function HomeScreen() {
                   <View style={[styles.progressFill, { width: `${carbsPercent}%`, backgroundColor: theme.colors.carbs }]} />
                 </View>
                 <Text style={styles.macroValues}>
-                  {Math.round(todayLog.totals.carbs)}g / {Math.round(todayLog.targets.carbs)}g
+                  {todayLog ? Math.round(todayLog.totals.carbs) : 0}g / {todayLog ? Math.round(todayLog.targets.carbs) : Math.round(profile.carbs_target || 200)}g
                 </Text>
               </View>
 
@@ -466,7 +536,7 @@ export default function HomeScreen() {
                   <View style={[styles.progressFill, { width: `${fatPercent}%`, backgroundColor: theme.colors.fat }]} />
                 </View>
                 <Text style={styles.macroValues}>
-                  {Math.round(todayLog.totals.fat)}g / {Math.round(todayLog.targets.fat)}g
+                  {todayLog ? Math.round(todayLog.totals.fat) : 0}g / {todayLog ? Math.round(todayLog.targets.fat) : Math.round(profile.fat_target || 60)}g
                 </Text>
               </View>
             </View>
@@ -486,7 +556,7 @@ export default function HomeScreen() {
         )}
 
         {/* Quick Actions */}
-        {!isFirstTimeUser && contextualActions.length > 0 && (
+        {contextualActions.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionsGrid}>
@@ -505,7 +575,7 @@ export default function HomeScreen() {
         )}
 
         {/* Streak Calendar */}
-        {streakCalendar.length > 0 && !isFirstTimeUser && (
+        {streakCalendar.length > 0 && (
           <View style={styles.section}>
             <View style={styles.streakHeader}>
               <TouchableOpacity onPress={() => router.push('/stats')}>
@@ -551,7 +621,7 @@ export default function HomeScreen() {
         )}
 
         {/* Oura Ring Metrics */}
-        {!isFirstTimeUser && ouraStatus?.connected && ouraStatus?.weekSummary?.dataAvailable && (
+        {ouraStatus?.connected && ouraStatus?.weekSummary?.dataAvailable && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recovery Metrics</Text>
             <TouchableOpacity
@@ -591,7 +661,7 @@ export default function HomeScreen() {
         )}
 
         {/* Apple Watch Metrics */}
-        {!isFirstTimeUser && appleWatchStatus?.connected && appleWatchStatus?.weekSummary?.dataAvailable && (
+        {appleWatchStatus?.connected && appleWatchStatus?.weekSummary?.dataAvailable && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recovery Metrics</Text>
             <TouchableOpacity
@@ -628,7 +698,7 @@ export default function HomeScreen() {
         )}
 
         {/* Today's Workout */}
-        {!isFirstTimeUser && trainingPlan && todayWorkout && (
+        {trainingPlan && todayWorkout && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Today's Workout</Text>
             <TouchableOpacity
@@ -647,8 +717,62 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Meal Plan - FEATURED */}
-        {!isFirstTimeUser && (
+        {/* Today's Meal Plan */}
+        {profile && todayMeals.length > 0 && (
+          <View style={styles.todayMealsSection}>
+            <View style={styles.todayMealsHeader}>
+              <ClipboardIcon width={28} height={28} fill={theme.colors.primary} />
+              <Text style={styles.todayMealsTitle}>Today's Meal Plan</Text>
+              <TouchableOpacity onPress={() => router.push('/meal-plan')}>
+                <Text style={styles.viewFullPlanLink}>View Full Plan →</Text>
+              </TouchableOpacity>
+            </View>
+            {todayMeals.map((meal, index) => (
+              <View key={index} style={styles.mealCard}>
+                <View style={styles.mealCardHeader}>
+                  <View>
+                    <Text style={styles.mealCardType}>{meal.meal_type.toUpperCase()}</Text>
+                    <Text style={styles.mealCardTitle}>{meal.title}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.quickLogButton,
+                      loggingMeal === meal.meal_type && styles.quickLogButtonDisabled
+                    ]}
+                    onPress={() => handleQuickLogMeal(meal)}
+                    disabled={loggingMeal === meal.meal_type}
+                  >
+                    <Text style={styles.quickLogButtonText}>
+                      {loggingMeal === meal.meal_type ? '...' : 'Log'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.mealCardFoods}>
+                  {meal.foods.map((food, foodIndex) => (
+                    <Text key={foodIndex} style={styles.foodItemText}>
+                      • {food.name} ({food.amount}{food.unit})
+                    </Text>
+                  ))}
+                </View>
+                <View style={styles.mealCardMacros}>
+                  <Text style={styles.mealMacro}>{Math.round(meal.totals.calories)} cal</Text>
+                  <Text style={[styles.mealMacro, { color: theme.colors.protein }]}>
+                    P: {Math.round(meal.totals.protein)}g
+                  </Text>
+                  <Text style={[styles.mealMacro, { color: theme.colors.carbs }]}>
+                    C: {Math.round(meal.totals.carbs)}g
+                  </Text>
+                  <Text style={[styles.mealMacro, { color: theme.colors.fat }]}>
+                    F: {Math.round(meal.totals.fat)}g
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Fallback Meal Plan CTA if no meals today */}
+        {profile && todayMeals.length === 0 && (
           <TouchableOpacity
             style={styles.mealPlanCTA}
             onPress={() => router.push('/meal-plan')}
@@ -665,7 +789,7 @@ export default function HomeScreen() {
         )}
 
         {/* Coach CTA */}
-        {!isFirstTimeUser && (
+        {profile && (
           <TouchableOpacity
             style={styles.coachCTA}
             onPress={() => router.push('/(tabs)/coach')}
@@ -1117,6 +1241,88 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: theme.colors.primary,
     fontWeight: theme.fontWeight.bold,
+  },
+  todayMealsSection: {
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+  },
+  todayMealsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  todayMealsTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    flex: 1,
+  },
+  viewFullPlanLink: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  mealCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  mealCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.sm,
+  },
+  mealCardType: {
+    fontSize: theme.fontSize.xs,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  mealCardTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+  },
+  quickLogButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
+  },
+  quickLogButtonDisabled: {
+    opacity: 0.5,
+  },
+  quickLogButtonText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+  },
+  mealCardFoods: {
+    marginBottom: theme.spacing.sm,
+  },
+  foodItemText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+    marginBottom: 2,
+  },
+  mealCardMacros: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  mealMacro: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeight.semibold,
   },
   coachCTA: {
     marginHorizontal: theme.spacing.xl,

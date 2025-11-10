@@ -92,15 +92,24 @@ export default function TrainingScreen() {
       const response = await trainingAPI.getCurrentPlan();
       if (response.success && response.data) {
         setTrainingPlan(response.data);
+      } else if (response.success && !response.data) {
+        // No active plan - guide user to create one
+        console.log('[TRAINING] No active training plan:', response.message);
+        setTrainingPlan(null);
+        Alert.alert(
+          'No Training Plan Yet',
+          'You haven\'t created your training plan yet. Tap "Generate New Training Plan" below to create your personalized program!',
+          [{ text: 'Got it!' }]
+        );
       } else {
-        // Show DETAILED error to user AND send to Sentry
+        // Actual error from backend
         const errorMsg = `Failed to load plan: ${response.error || 'Unknown error'}\n\nFull response: ${JSON.stringify(response, null, 2)}`;
         Alert.alert('Training Plan Error', errorMsg);
         console.error('[TRAINING] Fetch plan failed:', response);
         captureError(new Error(errorMsg), { feature: 'training', action: 'fetch_plan', extra: response });
       }
     } catch (error) {
-      // Show DETAILED error to user AND send to Sentry
+      // Network or unexpected error
       const errorDetails = error instanceof Error
         ? `${error.message}\n\nStack: ${error.stack}\n\nDetails: ${JSON.stringify((error as any).details || {}, null, 2)}`
         : String(error);

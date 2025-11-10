@@ -38,6 +38,7 @@ export default function FoodSearchScreen() {
   const [recentFoods, setRecentFoods] = useState<RecentFood[]>([]);
   const [todayLog, setTodayLog] = useState<DailyFoodLog | null>(null);
   const [mealSuggestions, setMealSuggestions] = useState<MealSuggestion[]>([]);
+  const [foodFilter, setFoodFilter] = useState<'all' | 'wholefoods' | 'fastfood'>('all');
 
   // Serving size modal
   const [selectedFood, setSelectedFood] = useState<FoodResult | null>(null);
@@ -61,8 +62,9 @@ export default function FoodSearchScreen() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        console.log('[FOOD_SEARCH] Searching:', query);
-        const response = await fetch(`${config.API_URL}/foods/lookup?q=${encodeURIComponent(query)}`);
+        console.log('[FOOD_SEARCH] Searching:', query, 'Filter:', foodFilter);
+        const filterParam = foodFilter !== 'all' ? `&filter=${foodFilter}` : '';
+        const response = await fetch(`${config.API_URL}/foods/lookup?q=${encodeURIComponent(query)}${filterParam}`);
         const data = await response.json();
 
         if (Array.isArray(data)) {
@@ -79,7 +81,14 @@ export default function FoodSearchScreen() {
     }, 500);
 
     setDebounceTimer(timer);
-  }, [debounceTimer]);
+  }, [debounceTimer, foodFilter]);
+
+  // Re-search when filter changes
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      handleSearch(searchQuery);
+    }
+  }, [foodFilter]);
 
   useEffect(() => {
     loadRecentFoods();
@@ -285,6 +294,34 @@ export default function FoodSearchScreen() {
         {loading && (
           <ActivityIndicator style={styles.loadingIcon} color={theme.colors.primary} />
         )}
+      </View>
+
+      {/* Food Filter Toggle */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterButton, foodFilter === 'all' && styles.filterButtonActive]}
+          onPress={() => setFoodFilter('all')}
+        >
+          <Text style={[styles.filterButtonText, foodFilter === 'all' && styles.filterButtonTextActive]}>
+            All Foods
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, foodFilter === 'wholefoods' && styles.filterButtonActive]}
+          onPress={() => setFoodFilter('wholefoods')}
+        >
+          <Text style={[styles.filterButtonText, foodFilter === 'wholefoods' && styles.filterButtonTextActive]}>
+            Whole Foods
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterButton, foodFilter === 'fastfood' && styles.filterButtonActive]}
+          onPress={() => setFoodFilter('fastfood')}
+        >
+          <Text style={[styles.filterButtonText, foodFilter === 'fastfood' && styles.filterButtonTextActive]}>
+            Fast Food
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {searchQuery.length > 0 && searchQuery.length < 2 && (
@@ -588,6 +625,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: theme.spacing.md,
     top: theme.spacing.md,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  filterButton: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  filterButtonActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '20',
+  },
+  filterButtonText: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  filterButtonTextActive: {
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.bold,
   },
   hintText: {
     color: theme.colors.textMuted,

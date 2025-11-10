@@ -32,7 +32,7 @@ import { initSentry, Sentry } from '../src/utils/sentry';
 initSentry();
 
 function AppContent() {
-  const { isDark } = useTheme();
+  const { isDark, theme: activeTheme } = useTheme();
 
   return (
     <>
@@ -40,8 +40,9 @@ function AppContent() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.background },
+          contentStyle: { backgroundColor: activeTheme.colors.background },
           animation: 'slide_from_right',
+          gestureEnabled: false, // Disable swipe-back gesture to prevent accidental logout
         }}
       >
         <Stack.Screen name="index" />
