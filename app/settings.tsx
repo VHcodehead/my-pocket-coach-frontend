@@ -158,8 +158,15 @@ export default function SettingsScreen() {
       const { authAPI: auth } = await import('../src/services/api');
       const response = await auth.getProfile();
 
-      if (!response.success || !response.data) {
-        console.error('[SETTINGS] No profile data returned');
+      // Handle new OAuth users with no profile yet
+      if (!response.success) {
+        if (response.error?.includes('Profile not found')) {
+          console.log('[SETTINGS] New user - no profile yet, entering onboarding mode');
+          setIsOnboardingMode(true);
+          setLoading(false);
+          return;
+        }
+        console.error('[SETTINGS] Profile fetch failed:', response.error);
         Alert.alert(ErrorMessages.notLoggedIn.title, ErrorMessages.notLoggedIn.message);
         router.replace('/');
         return;
