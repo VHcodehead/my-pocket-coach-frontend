@@ -48,8 +48,8 @@ export default function AppleWatchSettingsScreen() {
 
       if (!granted) {
         Alert.alert(
-          'Setup Required',
-          'Apple Watch integration requires a custom development build. This feature uses native iOS HealthKit which is not available in Expo Go.\n\nTo use this feature:\n1. Run: npx expo run:ios\n2. This will build the app with native HealthKit support\n3. Return here to connect your Apple Watch',
+          'Permission Required',
+          'Apple Watch integration requires access to your Health data. Please allow access to Activity, Workout, Heart Rate, and Sleep data in the permission prompt.\n\nIf you denied access, enable it in iPhone Settings:\nSettings > Privacy & Security > Health > My Pocket Coach',
           [{ text: 'Got It' }]
         );
         return;
