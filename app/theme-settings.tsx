@@ -1,19 +1,20 @@
 // Theme settings screen for dark mode toggle
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
 import { useTheme } from '../src/contexts/ThemeContext';
 import { haptic } from '../src/utils/haptics';
 
 export default function ThemeSettingsScreen() {
   const router = useRouter();
-  const { themeMode, setThemeMode } = useTheme();
+  const { themeMode, setThemeMode, theme } = useTheme();
 
   const modes = [
     { value: 'auto' as const, label: 'Auto (System)', icon: '🌓', description: 'Follows your device setting' },
     { value: 'light' as const, label: 'Light Mode', icon: '☀️', description: 'Always use light theme' },
     { value: 'dark' as const, label: 'Dark Mode', icon: '🌙', description: 'Always use dark theme' },
   ];
+
+  const styles = createStyles(theme);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -72,7 +73,7 @@ export default function ThemeSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

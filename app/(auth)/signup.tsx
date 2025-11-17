@@ -229,13 +229,17 @@ export default function SignupScreen() {
           },
           diet: {
             keto: profile.diet_type === 'keto',
-            vegetarian: profile.diet_type === 'vegetarian',
+            vegetarian: profile.diet_type === 'vegetarian' || profile.diet_type === 'pescatarian',
             vegan: profile.diet_type === 'vegan',
             halal: profile.diet_type === 'halal',
             kosher: profile.diet_type === 'kosher',
             allergens: profile.allergens || [],
-            mustInclude: profile.must_include || [],
-            avoid: profile.dislikes || [],
+            mustInclude: profile.diet_type === 'pescatarian'
+              ? [...(profile.must_include || []), 'fish', 'seafood']
+              : (profile.must_include || []),
+            avoid: profile.diet_type === 'pescatarian'
+              ? [...(profile.dislikes || []), 'chicken', 'beef', 'pork', 'turkey', 'lamb', 'meat']
+              : (profile.dislikes || []),
           },
         }).then(() => console.log('[SIGNUP] Initial meal plan generated'))
           .catch((error) => console.error('[SIGNUP] Meal plan generation failed (non-critical):', error));
@@ -363,19 +367,19 @@ export default function SignupScreen() {
               style={[styles.chip, goal === 'cut' && styles.chipActive]}
               onPress={() => setGoal('cut')}
             >
-              <Text style={[styles.chipText, goal === 'cut' && styles.chipTextActive]}>Cut</Text>
+              <Text style={[styles.chipText, goal === 'cut' && styles.chipTextActive]}>Lose Fat</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.chip, goal === 'recomp' && styles.chipActive]}
               onPress={() => setGoal('recomp')}
             >
-              <Text style={[styles.chipText, goal === 'recomp' && styles.chipTextActive]}>Recomp</Text>
+              <Text style={[styles.chipText, goal === 'recomp' && styles.chipTextActive]}>Maintain Weight</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.chip, goal === 'bulk' && styles.chipActive]}
               onPress={() => setGoal('bulk')}
             >
-              <Text style={[styles.chipText, goal === 'bulk' && styles.chipTextActive]}>Bulk</Text>
+              <Text style={[styles.chipText, goal === 'bulk' && styles.chipTextActive]}>Build Muscle</Text>
             </TouchableOpacity>
           </View>
 

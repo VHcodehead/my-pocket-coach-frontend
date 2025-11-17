@@ -172,12 +172,18 @@ export default function MealPlanScreen() {
       // Prepare diet preferences
       const dietType = profile.diet_type || 'standard';
       const diet = {
-        vegetarian: dietType === 'vegetarian',
-        vegan: dietType === 'vegan',
         keto: dietType === 'keto',
+        vegetarian: dietType === 'vegetarian' || dietType === 'pescatarian',
+        vegan: dietType === 'vegan',
+        halal: dietType === 'halal',
+        kosher: dietType === 'kosher',
         allergens: profile.allergens || [],
-        mustInclude: profile.must_include || [],
-        avoid: profile.dislikes || [],
+        mustInclude: dietType === 'pescatarian'
+          ? [...(profile.must_include || []), 'fish', 'seafood']
+          : (profile.must_include || []),
+        avoid: dietType === 'pescatarian'
+          ? [...(profile.dislikes || []), 'chicken', 'beef', 'pork', 'turkey', 'lamb', 'meat']
+          : (profile.dislikes || []),
       };
 
       console.log('[MEAL_PLAN] Calling generate with:', { planProfile, diet });

@@ -275,14 +275,18 @@ export default function WeeklyCheckinScreen() {
           height_cm: profile.height_cm,
         },
         diet: {
-          keto: profile.keto,
-          vegetarian: profile.vegetarian,
-          vegan: profile.vegan,
-          halal: profile.halal,
-          kosher: profile.kosher,
+          keto: profile.diet_type === 'keto',
+          vegetarian: profile.diet_type === 'vegetarian' || profile.diet_type === 'pescatarian',
+          vegan: profile.diet_type === 'vegan',
+          halal: profile.diet_type === 'halal',
+          kosher: profile.diet_type === 'kosher',
           allergens: profile.allergens || [],
-          mustInclude: profile.must_include || [],
-          avoid: profile.avoid || [],
+          mustInclude: profile.diet_type === 'pescatarian'
+            ? [...(profile.must_include || []), 'fish', 'seafood']
+            : (profile.must_include || []),
+          avoid: profile.diet_type === 'pescatarian'
+            ? [...(profile.dislikes || []), 'chicken', 'beef', 'pork', 'turkey', 'lamb', 'meat']
+            : (profile.dislikes || []),
         },
       });
 
