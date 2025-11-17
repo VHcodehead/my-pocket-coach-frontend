@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { mealPlanAPI, authAPI } from '../src/services/api';
 
 // Import SVG icons
@@ -35,6 +35,7 @@ interface DailyMeal {
 
 export default function MealPlanScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -296,6 +297,8 @@ export default function MealPlanScreen() {
     calculatedTargets: dailyTargets
   });
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       <View style={styles.customHeader}>
@@ -466,7 +469,7 @@ export default function MealPlanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

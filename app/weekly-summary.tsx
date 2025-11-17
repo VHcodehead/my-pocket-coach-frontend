@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { foodLogAPI } from '../src/services/api';
 import { generateWeeklySummary, WeeklySummaryReport } from '../src/utils/weeklySummaryReport';
 
@@ -16,6 +16,7 @@ import CoachIcon from '../assets/icons/coach-icon.svg';
 
 export default function WeeklySummaryScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<WeeklySummaryReport | null>(null);
 
@@ -69,6 +70,8 @@ export default function WeeklySummaryScreen() {
       </View>
     );
   }
+
+  const styles = createStyles(theme);
 
   return (
     <ScrollView style={styles.container}>
@@ -215,7 +218,7 @@ export default function WeeklySummaryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

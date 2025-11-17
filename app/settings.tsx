@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../src/services/supabase';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { foodLogAPI, trainingAPI, goalDateAPI, mealPlanAPI } from '../src/services/api';
 import { GoalDateValidationResult } from '../src/types';
 import {
@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function SettingsScreen() {
   const router = useRouter();
   const { onboarding } = useLocalSearchParams();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -477,6 +478,8 @@ export default function SettingsScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -694,19 +697,19 @@ export default function SettingsScreen() {
             style={[styles.chip, goal === 'cut' && styles.chipActive]}
             onPress={() => setGoal('cut')}
           >
-            <Text style={[styles.chipText, goal === 'cut' && styles.chipTextActive]}>Cut</Text>
+            <Text style={[styles.chipText, goal === 'cut' && styles.chipTextActive]}>Lose Fat</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.chip, goal === 'recomp' && styles.chipActive]}
             onPress={() => setGoal('recomp')}
           >
-            <Text style={[styles.chipText, goal === 'recomp' && styles.chipTextActive]}>Recomp</Text>
+            <Text style={[styles.chipText, goal === 'recomp' && styles.chipTextActive]}>Maintain Weight</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.chip, goal === 'bulk' && styles.chipActive]}
             onPress={() => setGoal('bulk')}
           >
-            <Text style={[styles.chipText, goal === 'bulk' && styles.chipTextActive]}>Bulk</Text>
+            <Text style={[styles.chipText, goal === 'bulk' && styles.chipTextActive]}>Build Muscle</Text>
           </TouchableOpacity>
         </View>
 
@@ -1105,7 +1108,7 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

@@ -3,13 +3,14 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { trainingAPI } from '../src/services/api';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function TrainingProgressScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -157,6 +158,8 @@ export default function TrainingProgressScreen() {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -339,7 +342,7 @@ export default function TrainingProgressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

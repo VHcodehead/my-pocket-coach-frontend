@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { trainingAPI } from '../src/services/api';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 interface TrainingLog {
   id: number;
@@ -23,6 +23,7 @@ interface GroupedLog {
 
 export default function TrainingHistoryScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<TrainingLog[]>([]);
   const [groupedLogs, setGroupedLogs] = useState<GroupedLog[]>([]);
@@ -69,6 +70,8 @@ export default function TrainingHistoryScreen() {
 
     setGroupedLogs(groupedArray);
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -150,7 +153,7 @@ export default function TrainingHistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

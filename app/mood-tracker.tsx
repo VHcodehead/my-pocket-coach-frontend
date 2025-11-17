@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { haptic } from '../src/utils/haptics';
 import { showToast } from '../src/utils/toast';
@@ -25,6 +25,7 @@ const MOODS = [
 
 export default function MoodTrackerScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [selectedMood, setSelectedMood] = useState<MoodType | null>(null);
   const [note, setNote] = useState('');
   const [todayEntries, setTodayEntries] = useState<MoodEntry[]>([]);
@@ -98,6 +99,8 @@ export default function MoodTrackerScreen() {
   };
 
   const stats = getMoodStats();
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -225,7 +228,7 @@ export default function MoodTrackerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { trainingAPI } from '../src/services/api';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 interface WorkoutTemplate {
   id: number;
@@ -18,6 +18,7 @@ interface WorkoutTemplate {
 
 export default function TrainingProgramScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<any>(null);
   const [allWorkouts, setAllWorkouts] = useState<WorkoutTemplate[]>([]);
@@ -62,6 +63,8 @@ export default function TrainingProgramScreen() {
       return newSet;
     });
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -354,7 +357,7 @@ export default function TrainingProgramScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

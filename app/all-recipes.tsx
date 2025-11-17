@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import config from '../src/config';
 
 export default function AllRecipesScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [recipes, setRecipes] = useState<any[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,8 @@ export default function AllRecipesScreen() {
   const handleRecipePress = (recipe: any) => {
     router.push(`/recipe-detail?id=${recipe.id}&slug=${recipe.slug}`);
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -130,7 +133,7 @@ export default function AllRecipesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Modal, Alert, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import config from '../src/config';
 import { foodLogAPI } from '../src/services/api';
 import { getRecentFoods, RecentFood } from '../src/utils/recentFoods';
@@ -28,6 +28,7 @@ interface FoodResult {
 export default function FoodSearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { theme } = useTheme();
   const mealType = params.mealType as string || 'breakfast';
   const targetDate = params.date as string | undefined; // Optional date for backdating entries
 
@@ -269,6 +270,8 @@ export default function FoodSearchScreen() {
   );
 
   const macros = calculateMacros();
+
+  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>
@@ -533,7 +536,7 @@ export default function FoodSearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

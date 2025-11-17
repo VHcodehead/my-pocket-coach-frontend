@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshCon
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/services/supabase';
 import { authAPI } from '../../src/services/api';
-import { theme } from '../../src/theme';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { getUserFriendlyError } from '../../src/utils/errorMessages';
 
 // Import SVG icons
@@ -22,6 +22,7 @@ console.log('[ME] Component file loaded');
 export default function MeScreen() {
   console.log('[ME] MeScreen component rendering');
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -142,6 +143,8 @@ export default function MeScreen() {
       </View>
     );
   }
+
+  const styles = createStyles(theme);
 
   return (
     <ScrollView
@@ -317,7 +320,7 @@ export default function MeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

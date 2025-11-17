@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { supabase } from '../src/services/supabase';
 
 interface WellnessEntry {
@@ -16,6 +16,7 @@ interface WellnessEntry {
 
 export default function WellnessTrackingScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [entries, setEntries] = useState<WellnessEntry[]>([]);
   const [todayEntry, setTodayEntry] = useState<WellnessEntry | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,6 +109,8 @@ export default function WellnessTrackingScreen() {
       sleep: (sum.sleep / count).toFixed(1),
     };
   };
+
+  const styles = createStyles(theme);
 
   const renderRatingButtons = (
     label: string,
@@ -250,7 +253,7 @@ export default function WellnessTrackingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

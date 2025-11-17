@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { trainingAPI } from '../src/services/api';
 
 type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
@@ -53,6 +53,7 @@ const COMMON_INJURIES = [
 
 export default function TrainingOnboardingScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
 
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -637,6 +638,8 @@ export default function TrainingOnboardingScreen() {
     </Modal>
   );
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       {/* Progress Modal */}
@@ -709,7 +712,7 @@ export default function TrainingOnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

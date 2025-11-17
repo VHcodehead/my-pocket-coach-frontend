@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Keyboard } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { checkinAPI, mealPlanAPI, authAPI, trainingAPI } from '../src/services/api';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
@@ -11,6 +11,7 @@ type MoodType = 'great' | 'good' | 'okay' | 'tired' | 'stressed';
 
 export default function WeeklyCheckinScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
 
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -894,6 +895,8 @@ export default function WeeklyCheckinScreen() {
     );
   };
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -966,7 +969,7 @@ export default function WeeklyCheckinScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

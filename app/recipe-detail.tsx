@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { foodLogAPI } from '../src/services/api';
 import config from '../src/config';
 
 export default function RecipeDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string; slug: string }>();
+  const { theme } = useTheme();
   const [recipe, setRecipe] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedServing, setSelectedServing] = useState(1.0);
@@ -102,6 +103,8 @@ export default function RecipeDetailScreen() {
       setLogging(false);
     }
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -265,7 +268,7 @@ export default function RecipeDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

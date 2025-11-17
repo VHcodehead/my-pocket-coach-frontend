@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { trainingAPI, foodLogAPI, gamificationAPI } from '../src/services/api';
 import { calculateCurrentStreak, generate7DayCalendar } from '../src/utils/streakCalendar';
 
@@ -24,6 +24,7 @@ interface PersonalRecord {
 
 export default function StatsScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
 
   // Available data
@@ -78,6 +79,8 @@ export default function StatsScreen() {
       setLoading(false);
     }
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -232,7 +235,7 @@ export default function StatsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

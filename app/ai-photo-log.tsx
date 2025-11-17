@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, ScrollView, ActivityIndicator, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { photoLogAPI, authAPI, foodLogAPI } from '../src/services/api';
 
 // Import SVG icons
@@ -13,6 +13,7 @@ import PhotoIcon from '../assets/icons/photo-icon.svg';
 export default function AIPhotoLogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { theme } = useTheme();
   const targetDate = params.date as string | undefined;
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
@@ -227,6 +228,8 @@ export default function AIPhotoLogScreen() {
     );
   };
 
+  const styles = createStyles(theme);
+
   const logMealFromAnalysis = async (foods: any[], nutrition: any) => {
     try {
       // Combine all foods into one entry
@@ -421,7 +424,7 @@ export default function AIPhotoLogScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../../src/theme';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { useUser } from '../../src/contexts/UserContext';
 import { coachAPI, foodLogAPI, trainingAPI } from '../../src/services/api';
 import { DailyFoodLog } from '../../src/types';
@@ -23,6 +23,7 @@ interface Message {
 export default function CoachScreen() {
   const router = useRouter();
   const { profile } = useUser();
+  const { theme } = useTheme();
   const firstName = profile?.fullName?.split(' ')[0] || 'there';
 
   const [activeView, setActiveView] = useState<'predictions' | 'chat'>('predictions');
@@ -188,6 +189,8 @@ export default function CoachScreen() {
     </View>
   );
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -328,7 +331,7 @@ export default function CoachScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

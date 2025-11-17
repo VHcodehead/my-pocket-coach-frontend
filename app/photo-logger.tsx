@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import config from '../src/config';
 import { foodLogAPI } from '../src/services/api';
 import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../src/utils/errorMessages';
@@ -29,6 +29,7 @@ interface AnalysisResult {
 
 export default function PhotoLoggerScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [image, setImage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [logging, setLogging] = useState(false);
@@ -165,6 +166,8 @@ export default function PhotoLoggerScreen() {
     if (hour >= 15 && hour < 18) return 'snack';
     return 'dinner';
   };
+
+  const styles = createStyles(theme);
 
   return (
     <ScrollView style={styles.container}>
@@ -319,7 +322,7 @@ export default function PhotoLoggerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import AppIntroSlider from 'react-native-app-intro-slider';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
@@ -105,6 +105,7 @@ const slides: Slide[] = [
 
 export default function AppTutorial() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [showSkipButton, setShowSkipButton] = useState(true);
 
   const renderSlide = ({ item }: { item: Slide }) => {
@@ -155,6 +156,8 @@ export default function AppTutorial() {
     );
   };
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       <AppIntroSlider
@@ -172,7 +175,7 @@ export default function AppTutorial() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

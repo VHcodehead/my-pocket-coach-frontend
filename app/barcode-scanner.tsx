@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import config from '../src/config';
 import { foodLogAPI } from '../src/services/api';
 import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../src/utils/errorMessages';
@@ -11,6 +11,7 @@ import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../src/uti
 export default function BarcodeScannerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { theme } = useTheme();
   const targetDate = params.date as string | undefined;
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
@@ -156,6 +157,8 @@ export default function BarcodeScannerScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
@@ -226,7 +229,7 @@ export default function BarcodeScannerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

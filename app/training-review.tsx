@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { trainingAPI } from '../src/services/api';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 interface ProgramStats {
   programName: string;
@@ -30,6 +30,7 @@ interface ProgramStats {
 export default function TrainingReviewScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { theme } = useTheme();
   const planId = params.planId ? Number(params.planId) : null;
 
   const [loading, setLoading] = useState(true);
@@ -110,6 +111,8 @@ export default function TrainingReviewScreen() {
   const handleViewProgress = () => {
     router.push('/training-progress');
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -282,7 +285,7 @@ export default function TrainingReviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

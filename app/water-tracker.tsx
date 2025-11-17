@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { supabase } from '../src/services/supabase';
 import { haptic } from '../src/utils/haptics';
 import { showToast } from '../src/utils/toast';
@@ -16,6 +16,7 @@ const GLASS_SIZE = 8; // 8 oz per glass
 
 export default function WaterTrackerScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [glasses, setGlasses] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -90,6 +91,8 @@ export default function WaterTrackerScreen() {
 
   const percentage = Math.min((glasses / WATER_GOAL) * 100, 100);
   const ounces = glasses * GLASS_SIZE;
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -178,7 +181,7 @@ export default function WaterTrackerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

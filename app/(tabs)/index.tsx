@@ -7,7 +7,7 @@ import { supabase } from '../../src/services/supabase';
 import { foodLogAPI, trainingAPI, quoteAPI, authAPI, mealPlanAPI } from '../../src/services/api';
 import { getOuraStatus, autoSyncOuraData, OuraStatus } from '../../src/services/ouraAPI';
 import { getAppleWatchStatus, autoSyncHealthKitData, AppleWatchStatus } from '../../src/services/healthKitAPI';
-import { theme } from '../../src/theme';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyFoodLog, UserProfile, MealPlan, Meal } from '../../src/types';
 import { useUser } from '../../src/contexts/UserContext';
@@ -35,6 +35,7 @@ import CircleRingIcon from '../../assets/icons/circle-ring-icon.svg';
 export default function HomeScreen() {
   const router = useRouter();
   const { profile: globalProfile } = useUser();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -407,6 +408,8 @@ export default function HomeScreen() {
   const proteinPercent = todayLog ? Math.min((todayLog.totals.protein / todayLog.targets.protein) * 100, 100) : 0;
   const carbsPercent = todayLog ? Math.min((todayLog.totals.carbs / todayLog.targets.carbs) * 100, 100) : 0;
   const fatPercent = todayLog ? Math.min((todayLog.totals.fat / todayLog.targets.fat) * 100, 100) : 0;
+
+  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>
@@ -811,7 +814,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

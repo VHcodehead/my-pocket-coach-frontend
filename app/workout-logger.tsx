@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { trainingAPI } from '../src/services/api';
 
 // Import SVG icons
@@ -38,6 +38,7 @@ interface Exercise {
 export default function WorkoutLoggerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { theme } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<any>(null);
@@ -408,6 +409,8 @@ export default function WorkoutLoggerScreen() {
   const totalSets = exercises.reduce((sum, ex) => sum + ex.sets, 0);
   const completedSets = exercises.reduce((sum, ex) => sum + ex.setData.filter(s => s.logged).length, 0);
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -689,7 +692,7 @@ export default function WorkoutLoggerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

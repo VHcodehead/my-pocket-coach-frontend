@@ -3,10 +3,11 @@ import { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/services/supabase';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
 
   useEffect(() => {
     checkAuth();
@@ -24,6 +25,8 @@ export default function WelcomeScreen() {
       console.error('[WELCOME] Error checking auth:', error);
     }
   };
+
+  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>
@@ -56,7 +59,7 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

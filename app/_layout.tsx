@@ -2,7 +2,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Toast from 'react-native-toast-message';
-import { theme } from '../src/theme';
+// theme is accessed via ThemeContext - no static import needed
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { Alert } from 'react-native';

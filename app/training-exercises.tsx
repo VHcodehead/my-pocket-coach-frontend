@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { trainingAPI } from '../src/services/api';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 
 interface Exercise {
   id: number;
@@ -32,6 +32,7 @@ const DIFFICULTIES = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
 export default function TrainingExercisesScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
@@ -113,6 +114,8 @@ export default function TrainingExercisesScreen() {
       setShowDetailModal(true);
     }
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -392,7 +395,7 @@ export default function TrainingExercisesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

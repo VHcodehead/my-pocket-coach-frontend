@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { supabase } from '../src/services/supabase';
 import { decode } from 'base64-arraybuffer';
 import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../src/utils/errorMessages';
 
 export default function ProgressPhotoCaptureScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [image, setImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [weight, setWeight] = useState('');
@@ -152,6 +153,8 @@ export default function ProgressPhotoCaptureScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -261,7 +264,7 @@ export default function ProgressPhotoCaptureScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

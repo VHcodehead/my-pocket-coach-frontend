@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { checkinAPI } from '../src/services/api';
 import { ErrorMessages } from '../src/utils/errorMessages';
 
@@ -22,6 +22,7 @@ interface CheckinPhotos {
 export default function PhotoTimelineScreen() {
   console.log('[PHOTO_TIMELINE] Component rendering');
   const router = useRouter();
+  const { theme } = useTheme();
   const [checkins, setCheckins] = useState<CheckinPhotos[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,6 +88,8 @@ export default function PhotoTimelineScreen() {
     const date = new Date(dateString);
     return `Week of ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -223,7 +226,7 @@ export default function PhotoTimelineScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

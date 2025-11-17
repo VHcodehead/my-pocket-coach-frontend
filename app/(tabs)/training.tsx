@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, A
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { trainingAPI } from '../../src/services/api';
-import { theme } from '../../src/theme';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { TrainingPlan } from '../../src/types';
 import { captureError } from '../../src/utils/sentry';
 
@@ -21,6 +21,7 @@ import ProgressIcon from '../../assets/icons/progress-icon.svg';
 
 export default function TrainingScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlan | null>(null);
@@ -205,6 +206,8 @@ export default function TrainingScreen() {
   // Has active plan - show dashboard
   const weekProgress = Math.round((trainingPlan.current_week / trainingPlan.duration_weeks) * 100);
 
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -367,7 +370,7 @@ export default function TrainingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

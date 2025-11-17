@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { foodLogAPI, authAPI } from '../../src/services/api';
-import { theme } from '../../src/theme';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { DailyFoodLog, FoodLogEntry } from '../../src/types';
 import { ErrorMessages, SuccessMessages, getUserFriendlyError } from '../../src/utils/errorMessages';
 import { haptic } from '../../src/utils/haptics';
@@ -26,6 +26,7 @@ import QuickAddIcon from '../../assets/icons/quick-add-icon.svg';
 
 export default function NutritionScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date()); // Date being viewed/logged to
@@ -376,6 +377,8 @@ export default function NutritionScreen() {
       </ScrollView>
     );
   }
+
+  const styles = createStyles(theme);
 
   return (
     <ScrollView
@@ -807,7 +810,7 @@ export default function NutritionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

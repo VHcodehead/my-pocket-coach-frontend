@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { foodLogAPI, trainingAPI } from '../src/services/api';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { DailyFoodLog } from '../src/types';
 import { captureError } from '../src/utils/sentry';
 
@@ -33,6 +33,7 @@ interface WeekDay {
 
 export default function CalendarViewScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
@@ -209,6 +210,8 @@ export default function CalendarViewScreen() {
     const last = weekDays[6].date;
     return `${first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -398,7 +401,7 @@ export default function CalendarViewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

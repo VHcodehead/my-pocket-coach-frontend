@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, RefreshControl } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { theme } from '../src/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import config from '../src/config';
 
 // Import SVG icons
@@ -28,6 +28,7 @@ interface Recipe {
 
 export default function RecipeLibraryScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -92,6 +93,8 @@ export default function RecipeLibraryScreen() {
 
     setFilteredRecipes(filtered);
   };
+
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
@@ -249,7 +252,7 @@ export default function RecipeLibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
