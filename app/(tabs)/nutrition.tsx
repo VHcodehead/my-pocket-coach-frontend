@@ -27,6 +27,7 @@ import QuickAddIcon from '../../assets/icons/quick-add-icon.svg';
 export default function NutritionScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date()); // Date being viewed/logged to
@@ -377,8 +378,6 @@ export default function NutritionScreen() {
       </ScrollView>
     );
   }
-
-  const styles = createStyles(theme);
 
   return (
     <ScrollView

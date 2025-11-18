@@ -23,6 +23,7 @@ export default function MeScreen() {
   console.log('[ME] MeScreen component rendering');
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -143,8 +144,6 @@ export default function MeScreen() {
       </View>
     );
   }
-
-  const styles = createStyles(theme);
 
   return (
     <ScrollView

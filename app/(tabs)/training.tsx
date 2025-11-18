@@ -22,6 +22,7 @@ import ProgressIcon from '../../assets/icons/progress-icon.svg';
 export default function TrainingScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlan | null>(null);
@@ -205,8 +206,6 @@ export default function TrainingScreen() {
 
   // Has active plan - show dashboard
   const weekProgress = Math.round((trainingPlan.current_week / trainingPlan.duration_weeks) * 100);
-
-  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>
