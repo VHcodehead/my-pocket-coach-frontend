@@ -8,6 +8,7 @@ import { UserProfile } from '../src/types';
 export default function GoalsMilestonesScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [startingWeight, setStartingWeight] = useState<number | null>(null);
   const [currentWeight, setCurrentWeight] = useState<number | null>(null);
@@ -85,8 +86,6 @@ export default function GoalsMilestonesScreen() {
     { percent: 75, label: 'Almost There', achieved: calculateProgress() >= 75, emoji: '🔥' },
     { percent: 100, label: 'Goal Achieved!', achieved: calculateProgress() >= 100, emoji: '🏆' },
   ];
-
-  const styles = createStyles(theme);
 
   if (loading) {
     return (

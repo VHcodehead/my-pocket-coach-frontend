@@ -36,6 +36,7 @@ interface DailyMeal {
 export default function MealPlanScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -296,8 +297,6 @@ export default function MealPlanScreen() {
     planTotals,
     calculatedTargets: dailyTargets
   });
-
-  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>

@@ -12,6 +12,7 @@ type MoodType = 'great' | 'good' | 'okay' | 'tired' | 'stressed';
 export default function WeeklyCheckinScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
 
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -894,8 +895,6 @@ export default function WeeklyCheckinScreen() {
       </ScrollView>
     );
   };
-
-  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>

@@ -39,6 +39,7 @@ export default function WorkoutLoggerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
 
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<any>(null);
@@ -408,8 +409,6 @@ export default function WorkoutLoggerScreen() {
   const recommendation = getRecommendation(currentExercise.exerciseId);
   const totalSets = exercises.reduce((sum, ex) => sum + ex.sets, 0);
   const completedSets = exercises.reduce((sum, ex) => sum + ex.setData.filter(s => s.logged).length, 0);
-
-  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>

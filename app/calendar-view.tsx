@@ -34,6 +34,7 @@ interface WeekDay {
 export default function CalendarViewScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
@@ -210,8 +211,6 @@ export default function CalendarViewScreen() {
     const last = weekDays[6].date;
     return `${first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
-
-  const styles = createStyles(theme);
 
   if (loading) {
     return (

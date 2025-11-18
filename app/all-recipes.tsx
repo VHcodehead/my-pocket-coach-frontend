@@ -8,6 +8,7 @@ import config from '../src/config';
 export default function AllRecipesScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [filteredRecipes, setFilteredRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,8 +56,6 @@ export default function AllRecipesScreen() {
   const handleRecipePress = (recipe: any) => {
     router.push(`/recipe-detail?id=${recipe.id}&slug=${recipe.slug}`);
   };
-
-  const styles = createStyles(theme);
 
   if (loading) {
     return (

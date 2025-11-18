@@ -17,6 +17,7 @@ import CoachIcon from '../assets/icons/coach-icon.svg';
 export default function WeeklySummaryScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<WeeklySummaryReport | null>(null);
 
@@ -70,8 +71,6 @@ export default function WeeklySummaryScreen() {
       </View>
     );
   }
-
-  const styles = createStyles(theme);
 
   return (
     <ScrollView style={styles.container}>
