@@ -36,6 +36,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { profile: globalProfile } = useUser();
   const { theme } = useTheme();
+  const styles = createStyles(theme);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -408,8 +409,6 @@ export default function HomeScreen() {
   const proteinPercent = todayLog ? Math.min((todayLog.totals.protein / todayLog.targets.protein) * 100, 100) : 0;
   const carbsPercent = todayLog ? Math.min((todayLog.totals.carbs / todayLog.targets.carbs) * 100, 100) : 0;
   const fatPercent = todayLog ? Math.min((todayLog.totals.fat / todayLog.targets.fat) * 100, 100) : 0;
-
-  const styles = createStyles(theme);
 
   return (
     <View style={styles.container}>
