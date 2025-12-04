@@ -5,7 +5,6 @@ import Toast from 'react-native-toast-message';
 // theme is accessed via ThemeContext - no static import needed
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
-import { Alert } from 'react-native';
 
 // CRITICAL: Catch all errors BEFORE they crash
 (global as any).ErrorUtils?.setGlobalHandler?.((error: Error, isFatal: boolean) => {
@@ -16,15 +15,8 @@ import { Alert } from 'react-native';
     isFatal,
   });
 
-  // Show alert so we can see it before crash
-  Alert.alert(
-    'Error Caught!',
-    `${error.name}: ${error.message}\n\nCheck console for stack trace`,
-    [{ text: 'OK' }]
-  );
-
-  // Re-throw to let Sentry catch it too
-  throw error;
+  // Don't show Alert - it crashes iOS
+  // Just log to console for debugging
 });
 
 // Initialize Sentry
@@ -64,5 +56,5 @@ function RootLayout() {
   );
 }
 
-// Wrap with Sentry for error tracking
-export default Sentry.wrap(RootLayout);
+// Sentry disabled - export directly without wrapper
+export default RootLayout;
