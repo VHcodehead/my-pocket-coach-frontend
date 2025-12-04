@@ -66,5 +66,5 @@ function RootLayout() {
   );
 }
 
-// Sentry disabled - export directly without wrapper
-export default RootLayout;
+// Sentry error capture enabled (network tracking disabled to prevent crashes)
+export default Sentry.wrap(RootLayout);

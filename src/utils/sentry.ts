@@ -3,10 +3,40 @@ import * as Sentry from '@sentry/react-native';
 const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN || '';
 
 export function initSentry() {
-  // PERMANENTLY DISABLED - Sentry has bugs causing crashes (SentryBaggageSerialization)
-  // Using Apple's native crash logs + user feedback instead
-  console.log('⚠️  Sentry disabled - using Apple crash logs');
-  return;
+  if (__DEV__) {
+    console.log('⚠️  Sentry disabled in development');
+    return;
+  }
+
+  if (!SENTRY_DSN) {
+    console.error('❌ SENTRY_DSN not configured');
+    return;
+  }
+
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: __DEV__ ? 'development' : 'production',
+
+    // DISABLE network tracking - it was causing SentryBaggageSerialization crashes
+    enableAutoSessionTracking: false,
+    enableAppHangTracking: false,
+    integrations: [],
+
+    // Only capture errors, no performance/network tracking
+    tracesSampleRate: 0,
+
+    beforeSend(event) {
+      // Minimal processing
+      return event;
+    },
+
+    ignoreErrors: [
+      /Network request failed/i,
+      /timeout/i,
+    ],
+  });
+
+  console.log('✅ Sentry initialized (errors only, no network tracking)');
 }
 
 // Helper functions
