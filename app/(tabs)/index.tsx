@@ -14,6 +14,7 @@ import { useUser } from '../../src/contexts/UserContext';
 import { getGreeting } from '../../src/utils/coachFeedback';
 import { generate7DayCalendar, calculateCurrentStreak, CalendarDay } from '../../src/utils/streakCalendar';
 import { getContextualActions, QuickAction } from '../../src/utils/contextualActions';
+import Toast from 'react-native-toast-message';
 
 // Import SVG icons
 import FireIcon from '../../assets/icons/fire-icon.svg';
@@ -143,10 +144,14 @@ export default function HomeScreen() {
       console.log('[HOME] Promise.all completed');
     } catch (error: any) {
       console.error('[HOME] Error loading data:', error);
-      // Show error so we can see it in TestFlight
-      setTimeout(() => {
-        alert(`HOME ERROR: ${error?.message || JSON.stringify(error)}`);
-      }, 500);
+      // Show error via Toast so we can see it in TestFlight
+      Toast.show({
+        type: 'error',
+        text1: '🔴 HOME ERROR',
+        text2: error?.message || 'Unknown error',
+        visibilityTime: 15000,
+        position: 'top',
+      });
     } finally {
       setLoading(false);
     }

@@ -6,8 +6,28 @@ import Toast from 'react-native-toast-message';
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 
-// Global error handler removed - was causing crashes
-// Errors will be caught by try-catch blocks in individual screens
+// Global error handler with Toast (safe, won't crash like Alert.alert)
+(global as any).ErrorUtils?.setGlobalHandler?.((error: Error, isFatal: boolean) => {
+  console.error('🔴 GLOBAL ERROR CAUGHT:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+    isFatal,
+  });
+
+  // Show error via Toast (won't crash iOS like Alert does)
+  setTimeout(() => {
+    Toast.show({
+      type: 'error',
+      text1: '🔴 ERROR',
+      text2: error.message || 'Unknown error',
+      visibilityTime: 15000,
+      position: 'top',
+    });
+  }, 100);
+
+  // Don't re-throw - let app continue
+});
 
 // Initialize Sentry
 import { initSentry, Sentry } from '../src/utils/sentry';

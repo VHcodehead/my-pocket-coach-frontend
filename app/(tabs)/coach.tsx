@@ -64,10 +64,14 @@ export default function CoachScreen() {
       await Promise.all([loadTodayLog(), loadTrainingData()]);
     } catch (error: any) {
       console.error('[COACH] Error loading data:', error);
-      // Show error so we can see it in TestFlight
-      setTimeout(() => {
-        alert(`COACH ERROR: ${error?.message || JSON.stringify(error)}`);
-      }, 500);
+      // Show error via Toast so we can see it in TestFlight
+      Toast.show({
+        type: 'error',
+        text1: '🔴 COACH ERROR',
+        text2: error?.message || 'Unknown error',
+        visibilityTime: 15000,
+        position: 'top',
+      });
     }
   };
 
