@@ -15,8 +15,18 @@ import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
     isFatal,
   });
 
-  // Don't show Alert - it crashes iOS
-  // Just log to console for debugging
+  // Show error in Toast so we can see it in TestFlight
+  setTimeout(() => {
+    Toast.show({
+      type: 'error',
+      text1: '🔴 ERROR',
+      text2: error.message || 'Unknown error',
+      visibilityTime: 10000,
+      position: 'top',
+    });
+  }, 100);
+
+  // Don't re-throw - prevent crash
 });
 
 // Initialize Sentry

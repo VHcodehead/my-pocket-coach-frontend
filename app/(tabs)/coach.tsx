@@ -62,8 +62,12 @@ export default function CoachScreen() {
   const loadData = async () => {
     try {
       await Promise.all([loadTodayLog(), loadTrainingData()]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[COACH] Error loading data:', error);
+      // Show error so we can see it in TestFlight
+      setTimeout(() => {
+        alert(`COACH ERROR: ${error?.message || JSON.stringify(error)}`);
+      }, 500);
     }
   };
 

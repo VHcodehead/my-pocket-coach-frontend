@@ -141,8 +141,12 @@ export default function HomeScreen() {
 
       await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchMealPlan(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus(), fetchAppleWatchStatus()]);
       console.log('[HOME] Promise.all completed');
-    } catch (error) {
+    } catch (error: any) {
       console.error('[HOME] Error loading data:', error);
+      // Show error so we can see it in TestFlight
+      setTimeout(() => {
+        alert(`HOME ERROR: ${error?.message || JSON.stringify(error)}`);
+      }, 500);
     } finally {
       setLoading(false);
     }
