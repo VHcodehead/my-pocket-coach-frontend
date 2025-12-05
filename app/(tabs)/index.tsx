@@ -140,7 +140,10 @@ export default function HomeScreen() {
         }
       }).catch(err => console.error('[HOME] Apple Watch auto-sync failed:', err));
 
-      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs(), fetchMealPlan(), fetchTrainingData(), fetchDailyQuote(), fetchOuraStatus(), fetchAppleWatchStatus()]);
+      // Load in batches to prevent memory overload (was causing WatchdogTermination)
+      await Promise.all([fetchProfile(), fetchTodayLog(), fetchWeekLogs()]);
+      await Promise.all([fetchMealPlan(), fetchTrainingData(), fetchDailyQuote()]);
+      await Promise.all([fetchOuraStatus(), fetchAppleWatchStatus()]);
       console.log('[HOME] Promise.all completed');
     } catch (error: any) {
       console.error('[HOME] Error loading data:', error);
