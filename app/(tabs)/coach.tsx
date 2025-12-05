@@ -8,6 +8,7 @@ import { coachAPI, foodLogAPI, trainingAPI } from '../../src/services/api';
 import { DailyFoodLog } from '../../src/types';
 import { getSuggestedQuestions, SuggestedQuestion } from '../../src/utils/coachSuggestedQuestions';
 import { AIPredictionsDashboard } from '../../src/components/AIPredictionsDashboard';
+import Toast from 'react-native-toast-message';
 
 // Import SVG icons
 import PredictionIcon from '../../assets/icons/prediction-icon.svg';
