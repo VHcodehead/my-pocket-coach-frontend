@@ -29,10 +29,6 @@ import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
   // Don't re-throw - let app continue
 });
 
-// Initialize Sentry
-import { initSentry, Sentry } from '../src/utils/sentry';
-initSentry();
-
 function AppContent() {
   const { isDark, theme: activeTheme } = useTheme();
 
