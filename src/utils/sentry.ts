@@ -1,50 +1,25 @@
-import * as Sentry from '@sentry/react-native';
-
-const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN || '';
+// Sentry COMPLETELY REMOVED - @sentry/react-native causes ErrorBoundary undefined crash
+// with Expo SDK 54 and expo-router 6.x even when just importing the package
+// See: https://github.com/getsentry/sentry-react-native/issues/4341
 
 export function initSentry() {
-  // PERMANENTLY DISABLED - SentryBaggageSerialization crashes even with network tracking disabled
-  // Sentry.wrap() and Sentry.init() both try to intercept network requests
-  // Using Toast error handler + Railway logs instead
-  console.log('⚠️  Sentry completely disabled - using Toast error handler');
-  return;
+  console.log('⚠️  Sentry removed - using Toast error handler + Railway logs');
 }
 
-// Helper functions
-export function setBreadcrumb(category: string, message: string, data?: any) {
-  Sentry.addBreadcrumb({
-    category,
-    message,
-    level: 'info',
-    data,
-    timestamp: Date.now() / 1000,
-  });
-}
+// Stub functions that do nothing
+export function setBreadcrumb(_category: string, _message: string, _data?: any) {}
+export function setUser(_userId: string, _email?: string) {}
+export function captureError(_error: Error, _context: { feature: string; action: string; extra?: any }) {}
+export function captureMessage(_message: string, _level?: string) {}
+export function startTransaction(_name: string, _op: string) { return null; }
 
-export function setUser(userId: string, email?: string) {
-  Sentry.setUser({ id: userId, email });
-}
-
-export function captureError(error: Error, context: {
-  feature: string;
-  action: string;
-  extra?: any;
-}) {
-  Sentry.captureException(error, {
-    tags: {
-      feature: context.feature,
-      action: context.action,
-    },
-    extra: context.extra,
-  });
-}
-
-export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info') {
-  Sentry.captureMessage(message, level);
-}
-
-export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({ name, op });
-}
-
-export { Sentry };
+// Empty Sentry export for any code that references it
+export const Sentry = {
+  wrap: (component: any) => component,
+  init: () => {},
+  captureException: () => {},
+  captureMessage: () => {},
+  setUser: () => {},
+  addBreadcrumb: () => {},
+  startTransaction: () => null,
+};
