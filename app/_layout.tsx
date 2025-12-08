@@ -1,5 +1,5 @@
 // Root layout for Expo Router
-import { Stack, ErrorBoundary as ExpoErrorBoundary } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
