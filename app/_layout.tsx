@@ -5,11 +5,9 @@ import Toast from 'react-native-toast-message';
 // theme is accessed via ThemeContext - no static import needed
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
+import { Alert } from 'react-native';
 
-// Re-export ErrorBoundary directly from expo-router (fixes undefined error)
-export { ErrorBoundary } from 'expo-router';
-
-// Global error handler with Toast (safe, won't crash like Alert.alert)
+// CRITICAL: Catch all errors BEFORE they crash
 (global as any).ErrorUtils?.setGlobalHandler?.((error: Error, isFatal: boolean) => {
   console.error('🔴 GLOBAL ERROR CAUGHT:', {
     message: error.message,
@@ -18,19 +16,20 @@ export { ErrorBoundary } from 'expo-router';
     isFatal,
   });
 
-  // Show error via Toast (won't crash iOS like Alert does)
-  setTimeout(() => {
-    Toast.show({
-      type: 'error',
-      text1: '🔴 ERROR',
-      text2: error.message || 'Unknown error',
-      visibilityTime: 15000,
-      position: 'top',
-    });
-  }, 100);
+  // Show alert so we can see it before crash
+  Alert.alert(
+    'Error Caught!',
+    `${error.name}: ${error.message}\n\nCheck console for stack trace`,
+    [{ text: 'OK' }]
+  );
 
-  // Don't re-throw - let app continue
+  // Re-throw to let Sentry catch it too
+  throw error;
 });
+
+// Initialize Sentry
+import { initSentry, Sentry } from '../src/utils/sentry';
+initSentry();
 
 function AppContent() {
   const { isDark, theme: activeTheme } = useTheme();
@@ -65,5 +64,5 @@ function RootLayout() {
   );
 }
 
-// Sentry completely disabled - Sentry.wrap() was re-enabling network tracking
-export default RootLayout;
+// Wrap with Sentry for error tracking
+export default Sentry.wrap(RootLayout);

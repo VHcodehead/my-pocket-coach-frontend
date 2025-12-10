@@ -5,13 +5,11 @@ import { useRouter } from 'expo-router';
 import { authAPI } from '../../src/services/api';
 import { signInWithGoogle, signInWithApple } from '../../src/services/supabase';
 import { ConsentFlow } from '../../src/components/ConsentFlow';
-import { useTheme } from '../../src/contexts/ThemeContext';
+import { theme } from '../../src/theme';
 import { ErrorMessages, getUserFriendlyError } from '../../src/utils/errorMessages';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -276,7 +274,7 @@ export default function LoginScreen() {
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
