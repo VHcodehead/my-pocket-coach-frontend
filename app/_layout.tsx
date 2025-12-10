@@ -1,32 +1,13 @@
 // Root layout for Expo Router
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
 // theme is accessed via ThemeContext - no static import needed
 import { UserProvider } from '../src/contexts/UserContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 
-// Export ErrorBoundary for expo-router to use
-export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
-  return (
-    <View style={errorStyles.container}>
-      <Text style={errorStyles.title}>Something went wrong</Text>
-      <Text style={errorStyles.message}>{error.message}</Text>
-      <TouchableOpacity style={errorStyles.button} onPress={retry}>
-        <Text style={errorStyles.buttonText}>Try Again</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-const errorStyles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#0a0a0a' },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 10 },
-  message: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 20 },
-  button: { backgroundColor: '#00d4ff', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
-  buttonText: { color: '#000', fontWeight: 'bold' },
-});
+// Re-export ErrorBoundary directly from expo-router (fixes undefined error)
+export { ErrorBoundary } from 'expo-router';
 
 // Global error handler with Toast (safe, won't crash like Alert.alert)
 (global as any).ErrorUtils?.setGlobalHandler?.((error: Error, isFatal: boolean) => {
