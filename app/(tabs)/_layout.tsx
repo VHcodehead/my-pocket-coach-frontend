@@ -1,7 +1,7 @@
 // Tabs layout - Futuristic design
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { theme } from '../../src/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -12,7 +12,11 @@ import CoachIcon from '../../assets/icons/coach-icon.svg';
 import TrainingIcon from '../../assets/icons/training-icon.svg';
 import MeIcon from '../../assets/icons/me-icon.svg';
 
+// Re-export ErrorBoundary from expo-router to fix undefined error
+export { ErrorBoundary } from 'expo-router';
+
 export default function TabsLayout() {
+  const [isReady, setIsReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,8 +33,20 @@ export default function TabsLayout() {
       }
     } catch (error) {
       console.error('[TABS] Error checking tutorial status:', error);
+    } finally {
+      setIsReady(true);
     }
   };
+
+  // Show loading while checking tutorial status
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
