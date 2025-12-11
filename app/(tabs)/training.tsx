@@ -6,7 +6,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { trainingAPI } from '../../src/services/api';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { TrainingPlan } from '../../src/types';
-import { captureError } from '../../src/utils/sentry';
 
 // Import SVG icons
 import BicepIcon from '../../assets/icons/bicep-icon.svg';
@@ -108,7 +107,6 @@ export default function TrainingScreen() {
         const errorMsg = `Failed to load plan: ${response.error || 'Unknown error'}\n\nFull response: ${JSON.stringify(response, null, 2)}`;
         Alert.alert('Training Plan Error', errorMsg);
         console.error('[TRAINING] Fetch plan failed:', response);
-        captureError(new Error(errorMsg), { feature: 'training', action: 'fetch_plan', extra: response });
       }
     } catch (error) {
       // Network or unexpected error
@@ -117,9 +115,6 @@ export default function TrainingScreen() {
         : String(error);
       Alert.alert('Training Plan Error', `Error: ${errorDetails}`);
       console.error('[TRAINING] Fetch plan error:', error);
-      if (error instanceof Error) {
-        captureError(error, { feature: 'training', action: 'fetch_plan', extra: { fullError: error, stack: error.stack } });
-      }
     }
   };
 
