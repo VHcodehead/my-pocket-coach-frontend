@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, 
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { predictionsAPI, checkinAPI } from '../services/api';
-import { theme } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { useUser } from '../contexts/UserContext';
 
 // Import SVG icons
@@ -65,6 +65,8 @@ interface GoalPrediction {
 }
 
 export function AIPredictionsDashboard() {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const { profile } = useUser();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -466,7 +468,7 @@ export function AIPredictionsDashboard() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

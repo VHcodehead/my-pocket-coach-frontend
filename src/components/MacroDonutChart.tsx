@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
-import { theme } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface MacroDonutChartProps {
   protein: number;
@@ -21,6 +21,8 @@ export function MacroDonutChart({
   carbsTarget = 200,
   fatTarget = 65,
 }: MacroDonutChartProps) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   const screenWidth = Dimensions.get('window').width;
 
   // Calculate percentages
@@ -165,7 +167,7 @@ export function MacroDonutChart({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,

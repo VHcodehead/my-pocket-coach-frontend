@@ -117,9 +117,66 @@ export default function CoachScreen() {
     setLoading(true);
 
     try {
-      // Build context for AI
+      // Build comprehensive context for AI
       const context: any = {};
 
+      // Add full user profile context
+      if (profile) {
+        // Basic profile info
+        context.profile = {
+          weight: profile.weight || 0,
+          height_cm: profile.height_cm || 0,
+          age: profile.age || 0,
+          sex: profile.sex || 'male',
+          bodyfat: profile.bodyfat || 0,
+          activity: profile.activity || 1.2,
+          goal: profile.goal || 'recomp',
+        };
+
+        // Goal progression tracking
+        if (profile.goal_weight || profile.goal_date) {
+          const currentWeight = profile.weight || 0;
+          const goalWeight = profile.goal_weight || currentWeight;
+          const weightToLose = currentWeight - goalWeight;
+          const progressPercent = weightToLose !== 0
+            ? Math.max(0, Math.min(100, ((currentWeight - goalWeight) / weightToLose) * 100))
+            : 100;
+
+          context.goalProgress = {
+            currentWeight,
+            goalWeight,
+            weightRemaining: Math.abs(goalWeight - currentWeight),
+            goalDate: profile.goal_date,
+            progressPercent: Math.round(progressPercent),
+            safeMaxRate: profile.current_safe_max_rate,
+            isAggressive: profile.aggressive_timeline,
+          };
+        }
+
+        // Parse diet_type into flags
+        const dietType = profile.diet_type?.toLowerCase() || '';
+        context.diet = {
+          keto: dietType.includes('keto'),
+          vegetarian: dietType.includes('vegetarian'),
+          vegan: dietType.includes('vegan'),
+          pescatarian: dietType.includes('pescatarian'),
+          halal: dietType.includes('halal'),
+          kosher: dietType.includes('kosher'),
+          allergens: profile.allergens || [],
+          dislikes: profile.dislikes || [],
+        };
+
+        // Add macro targets from today's log
+        if (todayLog?.targets) {
+          context.targets = {
+            p: todayLog.targets.protein,
+            c: todayLog.targets.carbs,
+            f: todayLog.targets.fat,
+          };
+        }
+      }
+
+      // Today's nutrition progress
       if (todayLog) {
         context.nutrition = {
           calories: todayLog.totals.calories,
@@ -134,6 +191,7 @@ export default function CoachScreen() {
         };
       }
 
+      // Training plan context
       if (trainingPlan) {
         context.training = {
           hasActivePlan: true,
