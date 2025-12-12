@@ -22,7 +22,7 @@ const slides: Slide[] = [
     title: 'Welcome to My Pocket Coach! 🎉',
     text: 'Your complete fitness and nutrition platform that adapts to YOU. Let\'s explore what makes this app different.',
     icon: '💪',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#4A90D9',
   },
   {
     key: '2',
@@ -99,7 +99,7 @@ const slides: Slide[] = [
     title: 'You\'re All Set! 🚀',
     text: 'Start by viewing your meal plan, logging your first meal, or exploring your training program. The app learns and adapts as you use it!',
     icon: '✨',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#4A90D9',
   },
 ];
 
