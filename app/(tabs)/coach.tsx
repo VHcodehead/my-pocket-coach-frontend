@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Keyboa
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useUser } from '../../src/contexts/UserContext';
-import { coachAPI, foodLogAPI, trainingAPI } from '../../src/services/api';
+import { coachAPI, foodLogAPI, trainingAPI, checkinAPI } from '../../src/services/api';
 import { DailyFoodLog } from '../../src/types';
 import { getSuggestedQuestions, SuggestedQuestion } from '../../src/utils/coachSuggestedQuestions';
 import { AIPredictionsDashboard } from '../../src/components/AIPredictionsDashboard';
@@ -33,6 +33,7 @@ export default function CoachScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [todayLog, setTodayLog] = useState<DailyFoodLog | null>(null);
   const [trainingPlan, setTrainingPlan] = useState<any>(null);
+  const [checkinHistory, setCheckinHistory] = useState<any[]>([]);
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
@@ -61,7 +62,7 @@ export default function CoachScreen() {
 
   const loadData = async () => {
     try {
-      await Promise.all([loadTodayLog(), loadTrainingData()]);
+      await Promise.all([loadTodayLog(), loadTrainingData(), loadCheckinHistory()]);
     } catch (error) {
       console.error('[COACH] Error loading data:', error);
     }
@@ -92,6 +93,17 @@ export default function CoachScreen() {
       }
     } catch (error) {
       console.error('[COACH] Error loading training data:', error);
+    }
+  };
+
+  const loadCheckinHistory = async () => {
+    try {
+      const response = await checkinAPI.getHistory();
+      if (response.success && response.data) {
+        setCheckinHistory(response.data);
+      }
+    } catch (error) {
+      console.error('[COACH] Error loading checkin history:', error);
     }
   };
 
@@ -133,21 +145,88 @@ export default function CoachScreen() {
           goal: profile.goal || 'recomp',
         };
 
-        // Goal progression tracking
+        // Goal progression tracking with detailed metrics
         if (profile.goal_weight || profile.goal_date) {
           const currentWeight = profile.weight || 0;
           const goalWeight = profile.goal_weight || currentWeight;
-          const weightToLose = currentWeight - goalWeight;
-          const progressPercent = weightToLose !== 0
-            ? Math.max(0, Math.min(100, ((currentWeight - goalWeight) / weightToLose) * 100))
-            : 100;
+          const weightRemaining = Math.abs(goalWeight - currentWeight);
+          const isLosing = goalWeight < currentWeight;
+
+          // Calculate weeks remaining until goal date
+          let weeksRemaining = 0;
+          let daysRemaining = 0;
+          if (profile.goal_date) {
+            const goalDate = new Date(profile.goal_date);
+            const today = new Date();
+            const msRemaining = goalDate.getTime() - today.getTime();
+            daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+            weeksRemaining = Math.round(daysRemaining / 7 * 10) / 10; // 1 decimal
+          }
+
+          // Calculate required weekly rate to hit goal
+          const requiredWeeklyRate = weeksRemaining > 0
+            ? Math.round((weightRemaining / weeksRemaining) * 10) / 10
+            : 0;
+
+          // Calculate actual rate from check-in history
+          let actualWeeklyRate = 0;
+          let startingWeight = currentWeight;
+          let weeksTracked = 0;
+          let recentTrend = 'stable';
+
+          if (checkinHistory && checkinHistory.length >= 2) {
+            // Sort by date ascending
+            const sorted = [...checkinHistory].sort((a, b) =>
+              new Date(a.checked_at).getTime() - new Date(b.checked_at).getTime()
+            );
+
+            startingWeight = sorted[0].weight;
+            const latestWeight = sorted[sorted.length - 1].weight;
+            const firstDate = new Date(sorted[0].checked_at);
+            const lastDate = new Date(sorted[sorted.length - 1].checked_at);
+            const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+            weeksTracked = Math.round(daysBetween / 7 * 10) / 10;
+
+            if (weeksTracked > 0) {
+              const totalChange = startingWeight - latestWeight;
+              actualWeeklyRate = Math.round((totalChange / weeksTracked) * 10) / 10;
+            }
+
+            // Recent trend (last 3 check-ins)
+            if (sorted.length >= 3) {
+              const recent = sorted.slice(-3);
+              const recentChange = recent[0].weight - recent[recent.length - 1].weight;
+              if (recentChange > 0.5) recentTrend = 'losing';
+              else if (recentChange < -0.5) recentTrend = 'gaining';
+            }
+          }
+
+          // Calculate true progress percent
+          const totalToLose = Math.abs(startingWeight - goalWeight);
+          const amountLost = Math.abs(startingWeight - currentWeight);
+          const progressPercent = totalToLose > 0
+            ? Math.round((amountLost / totalToLose) * 100)
+            : 0;
+
+          // Determine if on track
+          const onTrack = isLosing
+            ? actualWeeklyRate >= requiredWeeklyRate * 0.8  // Within 80% of required rate
+            : actualWeeklyRate <= requiredWeeklyRate * 1.2;
 
           context.goalProgress = {
             currentWeight,
             goalWeight,
-            weightRemaining: Math.abs(goalWeight - currentWeight),
+            startingWeight,
+            weightRemaining,
             goalDate: profile.goal_date,
-            progressPercent: Math.round(progressPercent),
+            daysRemaining,
+            weeksRemaining,
+            progressPercent,
+            requiredWeeklyRate: isLosing ? requiredWeeklyRate : -requiredWeeklyRate,
+            actualWeeklyRate: isLosing ? actualWeeklyRate : -actualWeeklyRate,
+            weeksTracked,
+            onTrack,
+            recentTrend,
             safeMaxRate: profile.current_safe_max_rate,
             isAggressive: profile.aggressive_timeline,
           };
