@@ -348,6 +348,26 @@ export const mealPlanAPI = {
   },
 };
 
+// ============ FOOD LOOKUP ENDPOINTS ============
+
+export interface FoodLookupResult {
+  name: string;
+  p: number;  // protein per 100g
+  c: number;  // carbs per 100g
+  f: number;  // fat per 100g
+  kcal: number;  // calories per 100g
+  source: string;
+}
+
+export const foodLookupAPI = {
+  // Look up food macros by name (returns per 100g)
+  lookup: async (query: string, filter: 'all' | 'wholefoods' | 'fastfood' = 'wholefoods'): Promise<FoodLookupResult[]> => {
+    console.log('[API] Looking up food:', query);
+    const response = await apiFetch(`/foods/lookup?q=${encodeURIComponent(query)}&filter=${filter}`);
+    return response || [];
+  },
+};
+
 // ============ COACH CHAT ENDPOINTS ============
 
 export const coachAPI = {

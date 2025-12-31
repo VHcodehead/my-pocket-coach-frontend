@@ -1,10 +1,10 @@
 // Meal Plan - View your personalized weekly meal plan
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useTheme } from '../src/contexts/ThemeContext';
-import { mealPlanAPI, authAPI } from '../src/services/api';
+import { mealPlanAPI, authAPI, foodLookupAPI, foodLogAPI } from '../src/services/api';
 
 // Import SVG icons
 import ClipboardIcon from '../assets/icons/clipboard-icon.svg';
@@ -42,6 +42,7 @@ export default function MealPlanScreen() {
   const [generating, setGenerating] = useState(false);
   const [mealPlan, setMealPlan] = useState<any>(null);
   const [dailyMeals, setDailyMeals] = useState<DailyMeal[]>([]);
+  const [loggingMealIndex, setLoggingMealIndex] = useState<number | null>(null);
 
   useEffect(() => {
     loadMealPlan();
@@ -208,6 +209,105 @@ export default function MealPlanScreen() {
       alert('Failed to generate new meal plan variation. Please try again.');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Map meal title to meal type for logging
+  const getMealType = (title: string): 'breakfast' | 'lunch' | 'dinner' | 'snack' => {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('breakfast') || titleLower.includes('morning')) return 'breakfast';
+    if (titleLower.includes('lunch') || titleLower.includes('midday')) return 'lunch';
+    if (titleLower.includes('dinner') || titleLower.includes('evening')) return 'dinner';
+    return 'snack';
+  };
+
+  // Log all items in a meal with one tap
+  const logMeal = async (meal: DailyMeal, mealIndex: number) => {
+    try {
+      setLoggingMealIndex(mealIndex);
+      console.log('[MEAL_PLAN] Logging meal:', meal.title);
+
+      const mealType = getMealType(meal.title);
+      let successCount = 0;
+      let failCount = 0;
+
+      // Process each food item
+      for (const item of meal.items) {
+        try {
+          // Look up the food to get macros per 100g
+          const results = await foodLookupAPI.lookup(item.name);
+
+          if (results && results.length > 0) {
+            const food = results[0];
+            const factor = item.grams / 100;
+
+            // Scale macros by grams
+            const scaledMacros = {
+              calories: Math.round(food.kcal * factor),
+              protein: Math.round(food.p * factor),
+              carbs: Math.round(food.c * factor),
+              fat: Math.round(food.f * factor),
+            };
+
+            // Create the food log entry
+            await foodLogAPI.createEntry({
+              food_name: item.displayName || item.name,
+              serving_size: item.grams,
+              serving_unit: 'g',
+              calories: scaledMacros.calories,
+              protein: scaledMacros.protein,
+              carbs: scaledMacros.carbs,
+              fat: scaledMacros.fat,
+              meal_type: mealType,
+            });
+
+            successCount++;
+            console.log(`[MEAL_PLAN] Logged: ${item.name} (${item.grams}g) - ${scaledMacros.protein}p/${scaledMacros.carbs}c/${scaledMacros.fat}f`);
+          } else {
+            // Couldn't find the food - log with estimate based on meal calorie target
+            console.warn(`[MEAL_PLAN] Food not found: ${item.name}, using estimate`);
+
+            // Rough estimate: divide meal calories evenly among items
+            const itemCount = meal.items.length;
+            const estimatedCals = Math.round((meal._context?.calorieTarget || 400) / itemCount);
+
+            await foodLogAPI.createEntry({
+              food_name: item.displayName || item.name,
+              serving_size: item.grams,
+              serving_unit: 'g',
+              calories: estimatedCals,
+              protein: Math.round(estimatedCals * 0.3 / 4), // ~30% from protein
+              carbs: Math.round(estimatedCals * 0.4 / 4),   // ~40% from carbs
+              fat: Math.round(estimatedCals * 0.3 / 9),     // ~30% from fat
+              meal_type: mealType,
+            });
+            successCount++;
+          }
+        } catch (itemError) {
+          console.error(`[MEAL_PLAN] Failed to log item: ${item.name}`, itemError);
+          failCount++;
+        }
+      }
+
+      // Show result
+      if (failCount === 0) {
+        Alert.alert(
+          'Meal Logged!',
+          `Successfully logged ${successCount} items from ${meal.title} to your food diary.`,
+          [{ text: 'Great!', style: 'default' }]
+        );
+      } else {
+        Alert.alert(
+          'Partially Logged',
+          `Logged ${successCount} items, but ${failCount} items failed. Check your food log.`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      console.error('[MEAL_PLAN] Error logging meal:', error);
+      Alert.alert('Error', 'Failed to log meal. Please try again.');
+    } finally {
+      setLoggingMealIndex(null);
     }
   };
 
@@ -417,6 +517,19 @@ export default function MealPlanScreen() {
                     ))}
                   </View>
                 )}
+
+                {/* Log This Meal Button */}
+                <TouchableOpacity
+                  style={[styles.logMealButton, loggingMealIndex === index && styles.logMealButtonDisabled]}
+                  onPress={() => logMeal(meal, index)}
+                  disabled={loggingMealIndex !== null}
+                >
+                  {loggingMealIndex === index ? (
+                    <ActivityIndicator size="small" color={theme.colors.background} />
+                  ) : (
+                    <Text style={styles.logMealButtonText}>Log This Meal</Text>
+                  )}
+                </TouchableOpacity>
               </View>
             ))}
           </View>
@@ -708,6 +821,24 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.textSecondary,
     lineHeight: 20,
     marginBottom: theme.spacing.xs,
+  },
+  logMealButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  logMealButtonDisabled: {
+    opacity: 0.6,
+  },
+  logMealButtonText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
   },
   infoCard: {
     backgroundColor: theme.colors.primary + '15',
