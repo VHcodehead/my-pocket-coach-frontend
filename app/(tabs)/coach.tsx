@@ -99,8 +99,9 @@ export default function CoachScreen() {
   const loadCheckinHistory = async () => {
     try {
       const response = await checkinAPI.getHistory();
-      if (response.success && response.data) {
-        setCheckinHistory(response.data);
+      if (response.success && response.data?.checkins) {
+        setCheckinHistory(response.data.checkins);
+        console.log('[COACH] Loaded checkin history:', response.data.checkins.length, 'entries');
       }
     } catch (error) {
       console.error('[COACH] Error loading checkin history:', error);
@@ -278,6 +279,22 @@ export default function CoachScreen() {
           primaryGoal: trainingPlan.primary_goal,
         };
       }
+
+      // Debug: log what context we're sending
+      console.log('[COACH] Sending context to coach:', {
+        hasProfile: !!context.profile,
+        hasGoalProgress: !!context.goalProgress,
+        goalProgressDetails: context.goalProgress ? {
+          currentWeight: context.goalProgress.currentWeight,
+          goalWeight: context.goalProgress.goalWeight,
+          weeksRemaining: context.goalProgress.weeksRemaining,
+          actualWeeklyRate: context.goalProgress.actualWeeklyRate,
+          onTrack: context.goalProgress.onTrack,
+        } : null,
+        hasNutrition: !!context.nutrition,
+        hasTraining: !!context.training,
+        checkinHistoryCount: checkinHistory?.length || 0,
+      });
 
       const response = await coachAPI.sendMessage(textToSend, context);
 
