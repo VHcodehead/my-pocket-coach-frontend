@@ -346,6 +346,11 @@ export const mealPlanAPI = {
     console.log('[API] Fetching current meal plan');
     return apiFetch('/weekly-checkin/meal-plan');
   },
+
+  getWeightHistory: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching weight history');
+    return apiFetch('/weekly-checkin/weight-history');
+  },
 };
 
 // ============ FOOD LOOKUP ENDPOINTS ============

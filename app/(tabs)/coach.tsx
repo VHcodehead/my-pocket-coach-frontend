@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Keyboa
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useUser } from '../../src/contexts/UserContext';
-import { coachAPI, foodLogAPI, trainingAPI, checkinAPI } from '../../src/services/api';
+import { coachAPI, foodLogAPI, trainingAPI, checkinAPI, mealPlanAPI } from '../../src/services/api';
 import { DailyFoodLog } from '../../src/types';
 import { getSuggestedQuestions, SuggestedQuestion } from '../../src/utils/coachSuggestedQuestions';
 import { AIPredictionsDashboard } from '../../src/components/AIPredictionsDashboard';
@@ -34,6 +34,7 @@ export default function CoachScreen() {
   const [todayLog, setTodayLog] = useState<DailyFoodLog | null>(null);
   const [trainingPlan, setTrainingPlan] = useState<any>(null);
   const [checkinHistory, setCheckinHistory] = useState<any[]>([]);
+  const [weightHistory, setWeightHistory] = useState<any>(null);
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
@@ -62,7 +63,7 @@ export default function CoachScreen() {
 
   const loadData = async () => {
     try {
-      await Promise.all([loadTodayLog(), loadTrainingData(), loadCheckinHistory()]);
+      await Promise.all([loadTodayLog(), loadTrainingData(), loadCheckinHistory(), loadWeightHistory()]);
     } catch (error) {
       console.error('[COACH] Error loading data:', error);
     }
@@ -87,9 +88,65 @@ export default function CoachScreen() {
 
   const loadTrainingData = async () => {
     try {
-      const planResponse = await trainingAPI.getCurrentPlan();
+      const [planResponse, progressResponse] = await Promise.all([
+        trainingAPI.getCurrentPlan(),
+        trainingAPI.getProgress(),
+      ]);
+
       if (planResponse.success && planResponse.data) {
-        setTrainingPlan(planResponse.data);
+        const plan = planResponse.data;
+
+        // Calculate workouts this week from logs
+        let workoutsThisWeek = 0;
+        let recentWorkouts: any[] = [];
+
+        if (progressResponse.success && progressResponse.data?.logs) {
+          const logs = progressResponse.data.logs;
+          const now = new Date();
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+          startOfWeek.setHours(0, 0, 0, 0);
+
+          // Count unique workout days this week
+          const workoutDaysThisWeek = new Set<string>();
+          const recentWorkoutDates = new Set<string>();
+
+          logs.forEach((log: any) => {
+            const logDate = new Date(log.logged_at);
+            const dateKey = logDate.toISOString().split('T')[0];
+
+            if (logDate >= startOfWeek) {
+              workoutDaysThisWeek.add(dateKey);
+            }
+
+            // Track last 7 days of workouts
+            const sevenDaysAgo = new Date(now);
+            sevenDaysAgo.setDate(now.getDate() - 7);
+            if (logDate >= sevenDaysAgo && !recentWorkoutDates.has(dateKey)) {
+              recentWorkoutDates.add(dateKey);
+              recentWorkouts.push({
+                date: dateKey,
+                workout: log.workout_name || 'Workout',
+                completed: true,
+              });
+            }
+          });
+
+          workoutsThisWeek = workoutDaysThisWeek.size;
+        }
+
+        // Add calculated fields to plan
+        setTrainingPlan({
+          ...plan,
+          workoutsThisWeek,
+          recentWorkouts: recentWorkouts.slice(0, 5), // Last 5
+        });
+
+        console.log('[COACH] Training data loaded:', {
+          hasActivePlan: !!plan.plan,
+          workoutsThisWeek,
+          plannedPerWeek: plan.plan?.training_days_per_week,
+        });
       }
     } catch (error) {
       console.error('[COACH] Error loading training data:', error);
@@ -105,6 +162,18 @@ export default function CoachScreen() {
       }
     } catch (error) {
       console.error('[COACH] Error loading checkin history:', error);
+    }
+  };
+
+  const loadWeightHistory = async () => {
+    try {
+      const response = await mealPlanAPI.getWeightHistory();
+      if (response.success && response.data) {
+        setWeightHistory(response.data);
+        console.log('[COACH] Loaded weight history:', response.data.stats);
+      }
+    } catch (error) {
+      console.error('[COACH] Error loading weight history:', error);
     }
   };
 
@@ -146,88 +215,34 @@ export default function CoachScreen() {
           goal: profile.goal || 'recomp',
         };
 
-        // Goal progression tracking with detailed metrics
-        if (profile.goal_weight || profile.goal_date) {
-          const currentWeight = profile.weight || 0;
-          const goalWeight = profile.goal_weight || currentWeight;
-          const weightRemaining = Math.abs(goalWeight - currentWeight);
-          const isLosing = goalWeight < currentWeight;
-
-          // Calculate weeks remaining until goal date
-          let weeksRemaining = 0;
-          let daysRemaining = 0;
-          if (profile.goal_date) {
-            const goalDate = new Date(profile.goal_date);
-            const today = new Date();
-            const msRemaining = goalDate.getTime() - today.getTime();
-            daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
-            weeksRemaining = Math.round(daysRemaining / 7 * 10) / 10; // 1 decimal
-          }
-
-          // Calculate required weekly rate to hit goal
-          const requiredWeeklyRate = weeksRemaining > 0
-            ? Math.round((weightRemaining / weeksRemaining) * 10) / 10
-            : 0;
-
-          // Calculate actual rate from check-in history
-          let actualWeeklyRate = 0;
-          let startingWeight = currentWeight;
-          let weeksTracked = 0;
-          let recentTrend = 'stable';
-
-          if (checkinHistory && checkinHistory.length >= 2) {
-            // Sort by date ascending
-            const sorted = [...checkinHistory].sort((a, b) =>
-              new Date(a.checked_at).getTime() - new Date(b.checked_at).getTime()
-            );
-
-            startingWeight = sorted[0].weight;
-            const latestWeight = sorted[sorted.length - 1].weight;
-            const firstDate = new Date(sorted[0].checked_at);
-            const lastDate = new Date(sorted[sorted.length - 1].checked_at);
-            const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
-            weeksTracked = Math.round(daysBetween / 7 * 10) / 10;
-
-            if (weeksTracked > 0) {
-              const totalChange = startingWeight - latestWeight;
-              actualWeeklyRate = Math.round((totalChange / weeksTracked) * 10) / 10;
-            }
-
-            // Recent trend (last 3 check-ins)
-            if (sorted.length >= 3) {
-              const recent = sorted.slice(-3);
-              const recentChange = recent[0].weight - recent[recent.length - 1].weight;
-              if (recentChange > 0.5) recentTrend = 'losing';
-              else if (recentChange < -0.5) recentTrend = 'gaining';
-            }
-          }
-
-          // Calculate true progress percent
-          const totalToLose = Math.abs(startingWeight - goalWeight);
-          const amountLost = Math.abs(startingWeight - currentWeight);
-          const progressPercent = totalToLose > 0
-            ? Math.round((amountLost / totalToLose) * 100)
-            : 0;
-
-          // Determine if on track
-          const onTrack = isLosing
-            ? actualWeeklyRate >= requiredWeeklyRate * 0.8  // Within 80% of required rate
-            : actualWeeklyRate <= requiredWeeklyRate * 1.2;
-
+        // Goal progression tracking - use pre-calculated stats from weight history endpoint
+        if (weightHistory?.stats) {
+          const stats = weightHistory.stats;
           context.goalProgress = {
-            currentWeight,
-            goalWeight,
-            startingWeight,
-            weightRemaining,
+            currentWeight: stats.currentWeight || profile.weight,
+            goalWeight: stats.goalWeight || profile.goal_weight,
+            startingWeight: stats.startingWeight,
+            weightRemaining: stats.weightRemaining,
+            totalWeightChange: stats.totalWeightChange,
+            goalDate: stats.goalDate || profile.goal_date,
+            daysRemaining: stats.daysRemaining,
+            weeksRemaining: stats.weeksRemaining,
+            progressPercent: stats.progressPercent || 0,
+            requiredWeeklyRate: stats.requiredWeeklyRate,
+            actualWeeklyRate: stats.avgWeeklyChange,
+            weeksTracked: stats.weeksTracked,
+            onTrack: stats.onTrack,
+            totalCheckins: stats.totalCheckins,
+            safeMaxRate: profile.current_safe_max_rate,
+            isAggressive: profile.aggressive_timeline,
+          };
+        } else if (profile.goal_weight || profile.goal_date) {
+          // Fallback if no weight history available
+          context.goalProgress = {
+            currentWeight: profile.weight,
+            goalWeight: profile.goal_weight,
             goalDate: profile.goal_date,
-            daysRemaining,
-            weeksRemaining,
-            progressPercent,
-            requiredWeeklyRate: isLosing ? requiredWeeklyRate : -requiredWeeklyRate,
-            actualWeeklyRate: isLosing ? actualWeeklyRate : -actualWeeklyRate,
-            weeksTracked,
-            onTrack,
-            recentTrend,
+            weightRemaining: profile.goal_weight ? Math.abs(profile.weight - profile.goal_weight) : undefined,
             safeMaxRate: profile.current_safe_max_rate,
             isAggressive: profile.aggressive_timeline,
           };
@@ -271,12 +286,18 @@ export default function CoachScreen() {
         };
       }
 
-      // Training plan context
+      // Training plan context with adherence data
       if (trainingPlan) {
+        const plan = trainingPlan.plan;
         context.training = {
-          hasActivePlan: true,
-          experienceLevel: trainingPlan.experience_level,
-          primaryGoal: trainingPlan.primary_goal,
+          hasActivePlan: !!plan,
+          experienceLevel: plan?.experience_level || trainingPlan.experience_level,
+          primaryGoal: plan?.primary_goal || trainingPlan.primary_goal,
+          currentWeek: plan?.current_week,
+          currentBlock: plan?.current_block,
+          trainingDaysPerWeek: plan?.training_days_per_week,
+          workoutsThisWeek: trainingPlan.workoutsThisWeek || 0,
+          recentWorkouts: trainingPlan.recentWorkouts || [],
         };
       }
 
