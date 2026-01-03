@@ -651,6 +651,30 @@ export const predictionsAPI = {
 
 // ============ GAMIFICATION ENDPOINTS ============
 
+// ============ LEADERBOARD ENDPOINTS ============
+
+export const leaderboardAPI = {
+  getAll: async (): Promise<APIResponse> => {
+    console.log('[API] Fetching all leaderboards');
+    return apiFetch('/leaderboard/all');
+  },
+
+  getWeightLoss: async (limit: number = 20): Promise<APIResponse> => {
+    console.log('[API] Fetching weight loss leaderboard');
+    return apiFetch(`/leaderboard/weight-loss?limit=${limit}`);
+  },
+
+  getWeightGain: async (limit: number = 20): Promise<APIResponse> => {
+    console.log('[API] Fetching weight gain leaderboard');
+    return apiFetch(`/leaderboard/weight-gain?limit=${limit}`);
+  },
+
+  getLifts: async (exercise: 'squat' | 'bench' | 'deadlift', limit: number = 20): Promise<APIResponse> => {
+    console.log('[API] Fetching lift leaderboard:', exercise);
+    return apiFetch(`/leaderboard/lifts/${exercise}?limit=${limit}`);
+  },
+};
+
 export const gamificationAPI = {
   // Get all streaks (workout and check-in)
   getStreaks: async (): Promise<APIResponse> => {

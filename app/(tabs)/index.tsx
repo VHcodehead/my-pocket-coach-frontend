@@ -807,6 +807,23 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Community Leaderboard CTA */}
+        {profile && (
+          <TouchableOpacity
+            style={styles.communityCTA}
+            onPress={() => router.push('/community')}
+          >
+            <Text style={styles.communityCTAEmoji}>🏆</Text>
+            <View style={styles.communityCTAContent}>
+              <Text style={styles.communityCTATitle}>Community Leaderboards</Text>
+              <Text style={styles.communityCTAText}>
+                See how you stack up in weight loss, muscle gain, and strength
+              </Text>
+            </View>
+            <Text style={styles.communityCTAArrow}>→</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -1358,6 +1375,41 @@ const createStyles = (theme: any) => StyleSheet.create({
   coachCTAArrow: {
     fontSize: 32,
     color: theme.colors.primary,
+    fontWeight: theme.fontWeight.bold,
+  },
+  communityCTA: {
+    marginHorizontal: theme.spacing.xl,
+    marginTop: theme.spacing.md,
+    backgroundColor: '#FFD700' + '20',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...theme.shadows.md,
+  },
+  communityCTAEmoji: {
+    fontSize: 48,
+    marginRight: theme.spacing.md,
+  },
+  communityCTAContent: {
+    flex: 1,
+  },
+  communityCTATitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  communityCTAText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+  },
+  communityCTAArrow: {
+    fontSize: 32,
+    color: '#FFD700',
     fontWeight: theme.fontWeight.bold,
   },
 });
